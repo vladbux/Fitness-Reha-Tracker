@@ -1,0 +1,3208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reha, Gym &amp; Handstand Tracker</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+
+    /* Touch-friendly Range Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px;
+      border-radius: 9999px;
+      background: #e2e8f0;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      background: #2563eb;
+      border: 3px solid #ffffff;
+      margin-top: -8px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+    }
+    input[type="range"].slider-blue::-webkit-slider-thumb { background: #2563eb; }
+    input[type="range"].slider-emerald::-webkit-slider-thumb { background: #059669; }
+    input[type="range"].slider-amber::-webkit-slider-thumb { background: #d97706; }
+    input[type="range"].slider-indigo::-webkit-slider-thumb { background: #4f46e5; }
+    input[type="range"].slider-rose::-webkit-slider-thumb { background: #e11d48; }
+
+    /* Large touch checkbox */
+    .touch-check {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      cursor: pointer;
+      accent-color: #2563eb;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade {
+      animation: fadeIn 0.2s ease-out forwards;
+    }
+
+    /* Subtle scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-900 pb-24 md:pb-12">
+
+  <!-- =====================================================================
+       DARK SLATE / ANTHRAZIT HEADER
+       ===================================================================== -->
+  <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-md border-b border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <!-- Brand -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-amber-500 flex items-center justify-center shadow-lg shrink-0">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h3l2.5-7 4 14 2.5-7H21" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white truncate">Reha, Gym &amp; Handstand Tracker</h1>
+          <p class="text-[11px] text-slate-400 truncate">Patellarsehne re. • Bizepssehne li. • Skill-Work</p>
+        </div>
+      </div>
+
+      <!-- Desktop Navigation -->
+      <nav class="hidden lg:flex items-center gap-1 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
+        <button onclick="switchTab('uebersicht')" data-nav="uebersicht" class="nav-desktop px-3.5 py-2 rounded-lg text-xs font-bold transition-all">Übersicht</button>
+        <button onclick="switchTab('training')" data-nav="training" class="nav-desktop px-3.5 py-2 rounded-lg text-xs font-bold transition-all">Training</button>
+        <button onclick="switchTab('handstand')" data-nav="handstand" class="nav-desktop px-3.5 py-2 rounded-lg text-xs font-bold transition-all">Handstand</button>
+        <button onclick="switchTab('kalender')" data-nav="kalender" class="nav-desktop px-3.5 py-2 rounded-lg text-xs font-bold transition-all">Kalender &amp; Historie</button>
+        <button onclick="switchTab('statistik')" data-nav="statistik" class="nav-desktop px-3.5 py-2 rounded-lg text-xs font-bold transition-all">Statistik</button>
+      </nav>
+
+      <!-- Data & Demo Button -->
+      <button onclick="openDataModal()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-100 flex items-center gap-1.5 transition-colors shrink-0">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        <span class="hidden sm:inline">Daten &amp; Demo</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       MAIN CONTENT AREA
+       ===================================================================== -->
+  <main class="max-w-6xl mx-auto px-3.5 sm:px-6 pt-5 space-y-6">
+
+    <!-- ===================================================================
+         TAB 1: ÜBERSICHT (DASHBOARD)
+         =================================================================== -->
+    <section id="tab-uebersicht" class="tab-panel space-y-5 animate-fade">
+
+      <!-- Top Status Row: Phase Switcher + Physio Countdown -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <!-- Phase Card -->
+        <div class="md:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col justify-between gap-3">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="ov-phase-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">Phase 1 aktiv</span>
+                <span id="ov-phase-mode" class="text-[11px] font-medium text-slate-500">Automatik (25.11.–07.12.)</span>
+              </div>
+              <h2 id="ov-phase-title" class="text-base sm:text-lg font-extrabold text-slate-900 mt-1.5">3× Knie Zuhause + 3× Gym OK + 3× Handstand</h2>
+              <p id="ov-phase-desc" class="text-xs text-slate-600 mt-0.5">Erste 2 Wochen isometrische Sehnenberuhigung Zuhause, ab 08.12.2026 Wechsel auf 3× Kombi-Gym.</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 pt-1">
+            <div class="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button id="ov-btn-p1" onclick="setGlobalPhase(1, true)" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">Phase 1 (Wo. 1–2)</button>
+              <button id="ov-btn-p2" onclick="setGlobalPhase(2, true)" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">Phase 2 (Ab 08.12.)</button>
+            </div>
+            <button onclick="resetPhaseAuto()" class="text-xs font-semibold text-blue-600 hover:underline px-2 py-1">Auto-Datum</button>
+          </div>
+        </div>
+
+        <!-- Next Physio Card -->
+        <div class="md:col-span-5 bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-2xl shadow-sm p-4 sm:p-5 flex flex-col justify-between gap-3">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-100">Nächster Physiotherapie-Termin</div>
+              <div id="ov-physio-date" class="text-2xl font-extrabold mt-1">16.12.2026</div>
+              <div id="ov-physio-countdown" class="text-xs font-semibold text-emerald-100 mt-0.5">in 21 Tagen (Mi)</div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-2 bg-black/15 rounded-xl px-3 py-2 text-xs">
+            <span class="font-medium text-emerald-50">Kein Gym an Physio-Tagen geplant</span>
+            <button onclick="switchTab('kalender')" class="font-bold underline text-white shrink-0">Alle 6 Termine</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Goals Cards (Mon–Sun) -->
+      <div>
+        <div class="flex items-center justify-between mb-2.5 px-0.5">
+          <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Wochenziele (Mo – So)</h3>
+          <span id="ov-week-label" class="text-xs font-semibold text-slate-500">Aktuelle KW</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <!-- Goal: Knee Reha -->
+          <div class="bg-white rounded-2xl border border-blue-200/80 shadow-sm p-4 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">K</span>
+                <div>
+                  <div class="text-xs font-bold text-slate-800">Knie-Reha</div>
+                  <div class="text-[11px] text-slate-500">Patellarsehne re.</div>
+                </div>
+              </div>
+              <div id="goal-knee-text" class="text-lg font-extrabold text-blue-600">0 / 3</div>
+            </div>
+            <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div id="goal-knee-bar" class="h-full bg-blue-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Goal: Upper Body Gym -->
+          <div class="bg-white rounded-2xl border border-indigo-200/80 shadow-sm p-4 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">G</span>
+                <div>
+                  <div class="text-xs font-bold text-slate-800">Gym Oberkörper</div>
+                  <div class="text-[11px] text-slate-500">Bizepssehne-schonend</div>
+                </div>
+              </div>
+              <div id="goal-upper-text" class="text-lg font-extrabold text-indigo-600">0 / 3</div>
+            </div>
+            <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div id="goal-upper-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Goal: Handstand -->
+          <div class="bg-white rounded-2xl border border-amber-200/90 shadow-sm p-4 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">H</span>
+                <div>
+                  <div class="text-xs font-bold text-slate-800">Handstand-Skill</div>
+                  <div class="text-[11px] text-slate-500">15–20 Min. frisch</div>
+                </div>
+              </div>
+              <div id="goal-hs-text" class="text-lg font-extrabold text-amber-600">0 / 3</div>
+            </div>
+            <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div id="goal-hs-bar" class="h-full bg-amber-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Handstand Status Card + Quick Start Card -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <!-- Handstand Status -->
+        <div class="lg:col-span-6 bg-white rounded-2xl border border-amber-200 shadow-sm p-4 sm:p-5 flex flex-col justify-between gap-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                Handstand-Progression
+              </span>
+              <h3 id="ov-hs-level-title" class="text-base sm:text-lg font-extrabold text-slate-900 mt-1.5">Stufe 1: Wand-Balance &amp; Fingerkontrolle</h3>
+              <p id="ov-hs-level-sub" class="text-xs text-slate-600 mt-0.5">Ziel: 5×5–10s kontrolliertes Ablösen (Toe/Heel Pulls)</p>
+            </div>
+            <button onclick="quickStartTraining('handstand')" class="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold shadow-sm transition-colors shrink-0">
+              Handstand starten
+            </button>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2.5">
+            <div class="bg-amber-50/70 border border-amber-200/70 rounded-xl p-2.5 text-center">
+              <div class="text-[10px] font-bold uppercase text-amber-700">Wand-Baseline</div>
+              <div class="text-lg font-extrabold text-slate-900 mt-0.5">60 s</div>
+            </div>
+            <div class="bg-amber-50/70 border border-amber-200/70 rounded-xl p-2.5 text-center">
+              <div class="text-[10px] font-bold uppercase text-amber-700">PB Freier Hold</div>
+              <div id="ov-hs-pb" class="text-lg font-extrabold text-amber-600 mt-0.5">0 s</div>
+            </div>
+            <div class="bg-amber-50/70 border border-amber-200/70 rounded-xl p-2.5 text-center">
+              <div class="text-[10px] font-bold uppercase text-amber-700">Aktive Stufe</div>
+              <div id="ov-hs-stage-num" class="text-lg font-extrabold text-slate-900 mt-0.5">1 / 4</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Start Today -->
+        <div class="lg:col-span-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-extrabold text-slate-900">Schnellstart für Heute</h3>
+            <span id="ov-today-date" class="text-xs font-semibold text-slate-500"></span>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <button onclick="quickStartTraining('knee_home')" class="p-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-left transition-colors">
+              <div class="text-xs font-extrabold text-blue-800">Knie-Reha Zuhause</div>
+              <div class="text-[11px] text-blue-600 mt-0.5">Phase 1 • Wall Sit &amp; Stabi</div>
+            </button>
+            <button onclick="quickStartTraining('upper_a')" class="p-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-left transition-colors">
+              <div class="text-xs font-extrabold text-indigo-800">Oberkörper A / B</div>
+              <div class="text-[11px] text-indigo-600 mt-0.5">Gym • Bizepssehne sicher</div>
+            </button>
+            <button onclick="quickStartTraining('combo_a')" class="p-3 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-200 text-left transition-colors">
+              <div class="text-xs font-extrabold text-violet-800">Kombi-Gym (Ph. 2)</div>
+              <div class="text-[11px] text-violet-600 mt-0.5">Knie HSR + Oberkörper</div>
+            </button>
+            <button onclick="quickStartTraining('handstand')" class="p-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-left transition-colors">
+              <div class="text-xs font-extrabold text-amber-800">Handstand-Session</div>
+              <div class="text-[11px] text-amber-700 mt-0.5">Stoppuhr + Progression</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Open 24h Knee Checks Section -->
+      <div id="ov-open-24h-container" class="hidden bg-white rounded-2xl border-2 border-blue-300 shadow-sm p-4 sm:p-5 space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+            <h3 class="text-sm font-extrabold text-slate-900">Offene 24h-Knie-Checks (nächster Morgen)</h3>
+          </div>
+          <span class="text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full">Ziel: ≤ 3/10</span>
+        </div>
+        <div id="ov-open-24h-list" class="space-y-3">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Safety Rules Summary Strip -->
+      <div class="bg-slate-900 text-slate-100 rounded-2xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+        <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-700/80">
+          <div class="font-bold text-blue-400 mb-1">Knie (Patellarsehne)</div>
+          <p class="text-slate-300 leading-relaxed">Max. <strong>3/10</strong> Ziehen. Kein Auf-/Abspringen aufs rechte Knie beim Handstand – immer kontrolliert absteigen.</p>
+        </div>
+        <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-700/80">
+          <div class="font-bold text-indigo-400 mb-1">Schulter (Bizepssehne li.)</div>
+          <p class="text-slate-300 leading-relaxed"><strong>1–2 RIR</strong> im Tank, Dips max. 90° (Schultern tief), Curls Ellenbogen vor dem Körper, im Handstand aktiv hochdrücken.</p>
+        </div>
+        <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-700/80">
+          <div class="font-bold text-amber-400 mb-1">Handgelenke &amp; Sehnen</div>
+          <p class="text-slate-300 leading-relaxed">Vor jedem Handstand <strong>3–5 Min. Handgelenk-Warm-up</strong> (Kreisen, Finger-Push-ups) – niemals kalt belasten.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 2: TRAINING (WORKOUT-LOGGER)
+         =================================================================== -->
+    <section id="tab-training" class="tab-panel hidden space-y-5 animate-fade">
+
+      <!-- Control Card: Date, Physio Check, Type Selector, Handstand Add-on Toggle -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+          <div class="sm:col-span-5">
+            <label for="log-date" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Trainingsdatum</label>
+            <div class="flex gap-2">
+              <input type="date" id="log-date" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button onclick="setLogToday()" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-bold text-slate-700 shrink-0">Heute</button>
+            </div>
+          </div>
+
+          <div class="sm:col-span-7">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Phase für dieses Datum</span>
+              <span id="log-phase-badge" class="text-xs font-bold text-blue-700">Phase 1</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button id="log-btn-p1" onclick="setGlobalPhase(1, true)" class="py-2 rounded-lg text-xs font-bold transition-all">Phase 1 (Zuhause + Gym)</button>
+              <button id="log-btn-p2" onclick="setGlobalPhase(2, true)" class="py-2 rounded-lg text-xs font-bold transition-all">Phase 2 (Kombi-Gym)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Physio Warning Banner -->
+        <div id="log-physio-warning" class="hidden bg-emerald-50 border-2 border-emerald-400 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <div class="text-sm font-extrabold text-emerald-900">Physiotherapie-Termin – heute kein Gym geplant!</div>
+              <p id="log-physio-note" class="text-xs text-emerald-800 mt-0.5">Dokumentiere deinen Termin im Physio-Protokoll inkl. Kniewinkel &amp; Therapeuten-Feedback.</p>
+            </div>
+          </div>
+          <button onclick="selectWorkoutType('physio')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 transition-colors">
+            Physio-Protokoll öffnen
+          </button>
+        </div>
+
+        <!-- Workout Type Selector -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Trainingstyp wählen</label>
+          <div id="workout-type-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Optional Handstand Pre-Block Toggle (for non-standalone handstand workouts) -->
+        <div id="handstand-addon-row" class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-extrabold text-xs shrink-0">HS</span>
+            <div>
+              <div class="text-xs sm:text-sm font-bold text-slate-900">Inkl. Handstand-Block (vorab frisch, 15–20 Min.)</div>
+              <div class="text-[11px] text-amber-800">Ideal vor dem Oberkörper- oder Kombi-Gym – wird automatisch fürs Handstand-Wochenziel gezählt.</div>
+            </div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input type="checkbox" id="toggle-handstand-addon" onchange="onToggleHandstandAddon()" class="sr-only peer" />
+            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Countdown Timer Bar (Wall Sit 45s / Wand-HS 60s / Pause 120s) -->
+      <div class="bg-slate-900 text-white rounded-2xl p-3.5 sm:px-5 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Countdown-Timer</div>
+            <div id="cd-display" class="text-2xl font-extrabold font-mono leading-tight text-white">00:45</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button onclick="setCountdown(45)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-blue-300 border border-slate-700">45s Wall Sit</button>
+          <button onclick="setCountdown(60)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-amber-300 border border-slate-700">60s Wand-HS</button>
+          <button onclick="setCountdown(120)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700">120s Pause</button>
+          <button id="cd-toggle-btn" onclick="toggleCountdown()" class="px-3.5 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-white text-xs font-extrabold min-w-[70px]">Start</button>
+          <button onclick="resetCountdown()" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700">Reset</button>
+        </div>
+      </div>
+
+      <!-- ==================== HANDSTAND BLOCK (Dynamic) ==================== -->
+      <div id="section-handstand-block" class="hidden bg-white rounded-2xl border-2 border-amber-300 shadow-sm p-4 sm:p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-amber-100 pb-3">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">Handstand Skill-Work (frisch)</span>
+            <h3 class="text-base sm:text-lg font-extrabold text-slate-900 mt-1">Handstand-Block &amp; Live-Stoppuhr</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <label for="hs-session-level" class="text-xs font-bold text-slate-600">Stufe:</label>
+            <select id="hs-session-level" onchange="onHandstandLevelSelectChange()" class="bg-amber-50 border border-amber-300 rounded-xl px-3 py-1.5 text-xs font-extrabold text-amber-900 focus:outline-none">
+              <option value="1">Stufe 1: Wand-Balance</option>
+              <option value="2">Stufe 2: Split &amp; Bail</option>
+              <option value="3">Stufe 3: Frei 10–30s</option>
+              <option value="4">Stufe 4: Frei 30–60s</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Pre-Session Safety Checklist -->
+        <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3.5 space-y-2">
+          <div class="text-xs font-extrabold uppercase tracking-wider text-amber-800">Pflicht-Sicherheitscheck vor dem 1. Versuch</div>
+          <label class="flex items-start gap-2.5 cursor-pointer text-xs text-slate-800">
+            <input type="checkbox" id="hs-check-1" class="touch-check mt-0.5 accent-amber-600" />
+            <span><strong>1. Handgelenk-Warm-up (3–5 Min.):</strong> Kreisen, Handrücken-Dehnung, Finger-Push-ups (Sehnenschutz)</span>
+          </label>
+          <label class="flex items-start gap-2.5 cursor-pointer text-xs text-slate-800">
+            <input type="checkbox" id="hs-check-2" class="touch-check mt-0.5 accent-amber-600" />
+            <span><strong>2. Schultern aktiv hochdrücken (Elevation):</strong> Aus den Schultern lang machen, nicht einsacken (Bizepssehne)</span>
+          </label>
+          <label class="flex items-start gap-2.5 cursor-pointer text-xs text-slate-800">
+            <input type="checkbox" id="hs-check-3" class="touch-check mt-0.5 accent-amber-600" />
+            <span><strong>3. Knie-Schutz:</strong> Chest-to-Wall / sanftes Absteigen (Pirouette Bail), kein hartes Landen aufs rechte Knie</span>
+          </label>
+        </div>
+
+        <!-- Live Stopwatch Box -->
+        <div class="bg-slate-900 text-white rounded-2xl p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="text-[11px] font-bold uppercase tracking-wider text-amber-400">Handstand-Live-Stoppuhr</div>
+              <div id="sw-display" class="text-3xl sm:text-4xl font-extrabold font-mono tracking-tight text-white mt-0.5">00:00.0</div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="sw-toggle-btn" onclick="toggleStopwatch()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm min-w-[84px]">Start</button>
+              <button onclick="resetStopwatch()" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs sm:text-sm">Reset</button>
+              <button onclick="applyStopwatchAsAttempt()" class="px-3.5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm">Als Versuch übernehmen</button>
+            </div>
+          </div>
+
+          <!-- Recommended Drills for Selected Level -->
+          <div class="pt-1 border-t border-slate-800">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Empfohlene Drills dieser Stufe (antippen zum Auswählen):</div>
+            <div id="hs-drill-chips" class="flex flex-wrap gap-1.5">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Manual / Quick Attempt Entry Row -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+            <div class="sm:col-span-5">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Drill / Übung</label>
+              <input type="text" id="hs-drill-input" value="Toe Pulls (Bauch zur Wand, Ablösen)" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Zeit (Sek.)</label>
+              <input type="number" step="0.5" min="1" id="hs-duration-input" value="8" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Modus</label>
+              <select id="hs-mode-input" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-2 text-xs font-bold text-slate-900">
+                <option value="wand">Wand</option>
+                <option value="abloesen" selected>Ablösen</option>
+                <option value="frei">Frei</option>
+              </select>
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Linien-Qualität</label>
+              <div id="hs-quality-stars" class="flex items-center gap-1 py-1">
+                <!-- 1-5 stars rendered via JS -->
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-3 text-xs">
+              <span class="font-semibold text-slate-600">Session Best Frei: <strong id="hs-live-best" class="text-amber-600">0 s</strong></span>
+              <span class="font-semibold text-slate-600">Ø Top-3 Holds: <strong id="hs-live-top3" class="text-slate-900">0 s</strong></span>
+            </div>
+            <button onclick="addHandstandAttemptFromForm()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold transition-colors">+ Versuch hinzufügen</button>
+          </div>
+        </div>
+
+        <!-- Logged Attempts List in Current Draft -->
+        <div id="hs-attempts-list" class="space-y-2">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Handstand Tendon Check (Wrist & Anterior Shoulder) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5">
+            <div class="flex justify-between items-center">
+              <label for="hs-wrist-pain" class="text-xs font-bold text-slate-700">Handgelenk-Belastung</label>
+              <span id="hs-wrist-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">1 / 10</span>
+            </div>
+            <input type="range" id="hs-wrist-pain" min="0" max="10" step="1" value="1" class="w-full slider-amber" oninput="updateAllPainUI()" />
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5">
+            <div class="flex justify-between items-center">
+              <label for="hs-shoulder-pain" class="text-xs font-bold text-slate-700">Vordere Schulter (Handstand)</label>
+              <span id="hs-shoulder-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">0 / 10</span>
+            </div>
+            <input type="range" id="hs-shoulder-pain" min="0" max="10" step="1" value="0" class="w-full slider-amber" oninput="updateAllPainUI()" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== KNEE REHA BLOCK (Dynamic) ==================== -->
+      <div id="section-knee-block" class="hidden space-y-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">Knie-Reha (Patellarsehne re.)</span>
+            <h3 id="knee-block-title" class="text-base font-extrabold text-slate-900 mt-1">Knie-Übungen</h3>
+          </div>
+          <button onclick="openCustomExModal('knee')" class="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700">+ Eigene Knie-Übung</button>
+        </div>
+
+        <div id="knee-exercises-list" class="space-y-3">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Knee Pain & Angle Metrics -->
+        <div class="bg-white rounded-2xl border border-blue-200 shadow-sm p-4 space-y-4">
+          <div class="text-xs font-extrabold uppercase tracking-wider text-blue-700">Knie-Sehnen-Check (24-Stunden-Regel)</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Angle -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+              <div class="flex justify-between items-center">
+                <label for="log-knee-angle" class="text-xs font-bold text-slate-700">Schmerzfr. Kniewinkel</label>
+                <span id="log-knee-angle-val" class="text-sm font-extrabold text-blue-700 font-mono">50°</span>
+              </div>
+              <input type="range" id="log-knee-angle" min="30" max="120" step="5" value="50" class="w-full slider-blue" oninput="updateAllPainUI()" />
+              <div class="flex justify-between text-[10px] text-slate-500"><span>30°</span><span>60° Ziel</span><span>90°</span><span>120°</span></div>
+            </div>
+
+            <!-- Training Pain -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+              <div class="flex justify-between items-center">
+                <label for="log-knee-pain" class="text-xs font-bold text-slate-700">Schmerz im Training</label>
+                <span id="log-knee-pain-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">1 / 10</span>
+              </div>
+              <input type="range" id="log-knee-pain" min="0" max="10" step="1" value="1" class="w-full slider-emerald" oninput="updateAllPainUI()" />
+              <div id="log-knee-pain-warn" class="hidden text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-2 py-1">
+                ⚠ &gt;3/10: Reiz zu hoch – Winkel/Gewicht senken!
+              </div>
+            </div>
+
+            <!-- 24h Check -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+              <div class="flex justify-between items-center gap-2">
+                <label class="text-xs font-bold text-slate-700">24h-Check (Folgetag)</label>
+                <label class="flex items-center gap-1.5 text-[11px] font-bold text-blue-700 cursor-pointer">
+                  <input type="checkbox" id="log-knee-24h-open" checked onchange="toggleLog24hOpen()" class="accent-blue-600 w-4 h-4" />
+                  <span>Noch offen</span>
+                </label>
+              </div>
+              <div id="log-knee-24h-wrap" class="hidden space-y-1.5">
+                <div class="flex justify-end"><span id="log-knee-24h-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">1 / 10</span></div>
+                <input type="range" id="log-knee-24h" min="0" max="10" step="1" value="1" class="w-full slider-emerald" oninput="updateAllPainUI()" />
+              </div>
+              <p id="log-knee-24h-hint" class="text-[11px] text-slate-500">Erscheint morgen direkt in „Übersicht“ &amp; „Historie“ zum schnellen Nachtragen.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== UPPER BODY BLOCK (Dynamic) ==================== -->
+      <div id="section-upper-block" class="hidden space-y-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800">Oberkörper (Bizepssehne li. schonend)</span>
+            <h3 id="upper-block-title" class="text-base font-extrabold text-slate-900 mt-1">Oberkörper-Übungen • 1–2 RIR im Tank lassen</h3>
+          </div>
+          <button onclick="openCustomExModal('upper')" class="px-3 py-1.5 rounded-xl bg-white hover:bg-indigo-50 border border-indigo-200 text-xs font-bold text-indigo-700">+ Eigene OK-Übung</button>
+        </div>
+
+        <div id="upper-exercises-list" class="space-y-3">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Biceps Tendon Check -->
+        <div class="bg-white rounded-2xl border border-indigo-200 shadow-sm p-4 space-y-2">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-xs font-extrabold uppercase tracking-wider text-indigo-700">Bizepssehnen-Check (Vordere linke Schulter)</div>
+              <div class="text-[11px] text-slate-500">Schmerz/Reizung während oder direkt nach dem Oberkörpertraining</div>
+            </div>
+            <span id="log-biceps-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">0 / 10</span>
+          </div>
+          <input type="range" id="log-biceps-pain" min="0" max="10" step="1" value="0" class="w-full slider-indigo" oninput="updateAllPainUI()" />
+          <div id="log-biceps-warn" class="hidden text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1.5">
+            ⚠ Reizung &gt;3/10 an der Bizepssehne: Dips-Tiefe (max. 90°) und Curl-Ellenbogenposition prüfen!
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PHYSIO NOTES BLOCK (Dynamic) ==================== -->
+      <div id="section-physio-block" class="hidden bg-emerald-50 border border-emerald-300 rounded-2xl p-4 space-y-2">
+        <div class="text-sm font-extrabold text-emerald-900">Physiotherapie-Protokoll</div>
+        <p class="text-xs text-emerald-800">Trage unten deinen aktuellen schmerzfreien Kniewinkel sowie alle Empfehlungen, manuellen Befunde und neuen Heimübungen deines Physiotherapeuten in die Notizen ein.</p>
+      </div>
+
+      <!-- ==================== SESSION NOTES & SAVE ==================== -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
+        <div>
+          <label for="log-notes" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Notizen zur Einheit</label>
+          <textarea id="log-notes" rows="2" placeholder="Technik-Gefühl, Fortschritte, Physio-Feedback oder Besonderheiten..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div id="log-edit-banner" class="hidden flex items-center gap-2 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl">
+            <span>Bearbeitungsmodus aktiv</span>
+            <button onclick="cancelEditSession()" class="underline text-slate-700">Abbrechen</button>
+          </div>
+          <button onclick="saveWorkoutSession()" class="w-full sm:w-auto sm:ml-auto px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span id="log-save-label">Trainingseinheit speichern</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 3: HANDSTAND (DEDIZIERTER PROGRESSIONS-TRACKER)
+         =================================================================== -->
+    <section id="tab-handstand" class="tab-panel hidden space-y-5 animate-fade">
+
+      <!-- Milestone Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="bg-white rounded-2xl border border-amber-200 shadow-sm p-4">
+          <div class="text-[11px] font-bold uppercase text-amber-700">PB Freier Hold</div>
+          <div id="hs-stat-pb" class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1">0 s</div>
+          <div class="text-[11px] text-slate-500 mt-1">Ziel: 30–60 s frei</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+          <div class="text-[11px] font-bold uppercase text-slate-500">Ø Top-3 (letzte Session)</div>
+          <div id="hs-stat-top3" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">0 s</div>
+          <div class="text-[11px] text-slate-500 mt-1">Ablösen &amp; Frei</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+          <div class="text-[11px] font-bold uppercase text-slate-500">Handstand-Sessions</div>
+          <div id="hs-stat-total" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">0</div>
+          <div class="text-[11px] text-slate-500 mt-1">Gesamt absolviert</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-amber-200 shadow-sm p-4">
+          <div class="text-[11px] font-bold uppercase text-amber-700">Diese Woche</div>
+          <div id="hs-stat-week" class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1">0 / 3</div>
+          <div class="mt-2">
+            <button onclick="quickStartTraining('handstand')" class="w-full py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold">Jetzt üben</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4-Stage Skill Roadmap -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-base sm:text-lg font-extrabold text-slate-900">Handstand-Progressionsleiter (Skill-Roadmap)</h2>
+            <p class="text-xs text-slate-600">Strukturierter Weg vom 60s-Wand-Handstand zum stabilen freien Handstand (30–60s)</p>
+          </div>
+        </div>
+
+        <!-- Mastered Baseline Banner -->
+        <div class="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <div>
+              <div class="text-xs sm:text-sm font-extrabold text-emerald-900">Basis gemeistert: 60s Wand-Handstand</div>
+              <div class="text-[11px] text-emerald-800">Starke Kraft- und Ausdauerbasis vorhanden – Fokus liegt jetzt auf Balance, Fingerkontrolle &amp; sicherem Absteigen.</div>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold shrink-0">Gemeistert</span>
+        </div>
+
+        <!-- Dynamic 4 Stages Container -->
+        <div id="hs-roadmap-container" class="space-y-3.5">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Compact Technique Compendium -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-3.5">
+        <h3 class="text-base font-extrabold text-slate-900">Technik-Kompendium (Sehnen- &amp; Gelenkschutz)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
+          <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-3.5 space-y-1.5">
+            <div class="font-extrabold text-blue-900">1. Knie-sicheres Absteigen (Pirouette Bail)</div>
+            <p class="text-slate-700 leading-relaxed">Nutze <strong>Chest-to-Wall</strong> statt hartem Aufschwingen. Verlierst du nach vorne die Balance, hebe eine Hand, drehe die Hüfte seitlich wie bei einem halben Rad heraus und lande sanft mit gebeugter Hüfte auf dem <strong>linken Bein</strong> zuerst. Nie unkontrolliert aufs rechte Knie abspringen!</p>
+          </div>
+          <div class="bg-indigo-50/70 border border-indigo-200 rounded-xl p-3.5 space-y-1.5">
+            <div class="font-extrabold text-indigo-900">2. Depression (Dips) vs. Elevation (Handstand)</div>
+            <p class="text-slate-700 leading-relaxed">Bei <strong>Dips</strong> ziehst du die Schultern aktiv nach <em>unten</em> (Depression), damit der Oberarmkopf nicht gegen die Bizepssehne drückt. Im <strong>Handstand</strong> gilt das Gegenteil: Drücke dich maximal aus den Schultern nach <em>oben</em> zu den Ohren (Elevation) – so steht der Knochen stabil gestapelt ohne Sehnen-Scherung.</p>
+          </div>
+          <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3.5 space-y-1.5">
+            <div class="font-extrabold text-amber-900">3. Pflicht-Handgelenk-Routine (3–5 Min.)</div>
+            <p class="text-slate-700 leading-relaxed">1) Handgelenk-Kreisen (30s) • 2) Vierfüßlerstand sanftes Vor-/Zurückwippen mit gespreizten Fingern (10×) • 3) Handrücken locker auflegen &amp; sanft belasten (20s) • 4) <strong>First-Knuckle / Finger-Push-ups</strong> im Kniestand (2×10) zur Aktivierung der Unterarm-Beuger.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 4: KALENDER & HISTORIE
+         =================================================================== -->
+    <section id="tab-kalender" class="tab-panel hidden space-y-5 animate-fade">
+
+      <!-- Monthly Calendar Card -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <button onclick="shiftCalendarMonth(-1)" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700" aria-label="Vorheriger Monat">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <div class="text-center">
+            <h2 id="cal-month-title" class="text-base sm:text-lg font-extrabold text-slate-900">November 2026</h2>
+            <button onclick="jumpCalendarToToday()" class="text-xs font-bold text-blue-600 hover:underline">Zu Heute springen</button>
+          </div>
+          <button onclick="shiftCalendarMonth(1)" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700" aria-label="Nächster Monat">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+
+        <!-- Color Legend -->
+        <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl py-2 px-3">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Knie</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span> Oberkörper</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-violet-600"></span> Kombi-Gym</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Handstand</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> PHYSIO (Kein Gym)</span>
+        </div>
+
+        <!-- Weekday Headers -->
+        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold uppercase text-slate-500">
+          <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
+        </div>
+
+        <!-- Days Grid -->
+        <div id="cal-grid" class="grid grid-cols-7 gap-1 sm:gap-1.5">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Selected Day Panel -->
+        <div id="cal-day-detail" class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- Fixed Physio Dates Accordion / Card -->
+      <div class="bg-white rounded-2xl border border-emerald-200 shadow-sm p-4 sm:p-5 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-emerald-900">Feste Physiotherapie-Termine (Kein Gym)</h3>
+            <p class="text-xs text-slate-600">6 Termine vorbelegt (16.12.2026 bis 26.01.2027) – jederzeit ergänzbar</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+          <input type="date" id="physio-new-date" class="sm:col-span-4 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900" />
+          <input type="text" id="physio-new-note" placeholder="Notiz / Fokus..." class="sm:col-span-6 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900" />
+          <button onclick="addPhysioDate()" class="sm:col-span-2 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">+ Termin</button>
+        </div>
+        <div id="physio-dates-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- Chronological History -->
+      <div class="space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Trainingshistorie</h3>
+            <p class="text-xs text-slate-600">Alle Einheiten mit direktem 24h-Knie-Check-Nachtrag</p>
+          </div>
+          <div class="flex flex-wrap gap-1.5" id="history-filters">
+            <button onclick="setHistoryFilter('all')" data-hfilter="all" class="hfilter-btn px-3 py-1.5 rounded-lg text-xs font-bold">Alle</button>
+            <button onclick="setHistoryFilter('knee')" data-hfilter="knee" class="hfilter-btn px-3 py-1.5 rounded-lg text-xs font-bold">Knie</button>
+            <button onclick="setHistoryFilter('upper')" data-hfilter="upper" class="hfilter-btn px-3 py-1.5 rounded-lg text-xs font-bold">Oberkörper</button>
+            <button onclick="setHistoryFilter('handstand')" data-hfilter="handstand" class="hfilter-btn px-3 py-1.5 rounded-lg text-xs font-bold">Handstand</button>
+            <button onclick="setHistoryFilter('physio')" data-hfilter="physio" class="hfilter-btn px-3 py-1.5 rounded-lg text-xs font-bold">Physio</button>
+          </div>
+        </div>
+
+        <div id="history-cards" class="space-y-3">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 5: STATISTIK (4 INTERAKTIVE CHART.JS DIAGRAMME)
+         =================================================================== -->
+    <section id="tab-statistik" class="tab-panel hidden space-y-5 animate-fade">
+
+      <!-- Empty State Helper -->
+      <div id="stat-empty-box" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center space-y-3">
+        <h3 class="text-base font-extrabold text-slate-900">Noch keine Trainingsdaten vorhanden</h3>
+        <p class="text-xs text-slate-600 max-w-md mx-auto">Logge deine erste Einheit im Tab „Training“ oder lade die 4-Wochen-Demo-Daten, um alle 4 Verlaufsdiagramme direkt anzusehen.</p>
+        <button onclick="promptLoadDemoData()" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold">4-Wochen-Demo-Daten laden</button>
+      </div>
+
+      <!-- Chart 1: Weekly Frequency -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-3">
+        <div>
+          <h3 class="text-sm sm:text-base font-extrabold text-slate-900">1. Wöchentliche Trainingsfrequenz</h3>
+          <p class="text-xs text-slate-500">Absolvierte Einheiten pro Kalenderwoche (Knie-Reha, Oberkörper, Handstand) inkl. 3×-Wochenziel-Linie</p>
+        </div>
+        <div class="relative h-64 sm:h-72 w-full">
+          <canvas id="chart-weekly-freq"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Handstand Progression -->
+      <div class="bg-white rounded-2xl border border-amber-200 shadow-sm p-4 sm:p-5 space-y-3">
+        <div>
+          <h3 class="text-sm sm:text-base font-extrabold text-slate-900">2. Handstand-Progression &amp; Sehnenbelastung</h3>
+          <p class="text-xs text-slate-500">Längster freier Hold (Sek.) &amp; Ø Top-3-Holds vs. Handgelenk-/Schulterschmerz (0–10)</p>
+        </div>
+        <div class="relative h-64 sm:h-72 w-full">
+          <canvas id="chart-hs-progress"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 3: Knee Reha Course -->
+      <div class="bg-white rounded-2xl border border-blue-200 shadow-sm p-4 sm:p-5 space-y-3">
+        <div>
+          <h3 class="text-sm sm:text-base font-extrabold text-slate-900">3. Knie-Reha Verlauf (Patellarsehne re.)</h3>
+          <p class="text-xs text-slate-500">Schmerzfreier Kniewinkel (°) vs. Schmerz im Training &amp; 24h-Folgetag (gestrichelte Warngrenze = 3/10)</p>
+        </div>
+        <div class="relative h-64 sm:h-72 w-full">
+          <canvas id="chart-knee-course"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 4: Upper Body Progression -->
+      <div class="bg-white rounded-2xl border border-indigo-200 shadow-sm p-4 sm:p-5 space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">4. Oberkörper-Fortschritt &amp; Bizepssehne (li.)</h3>
+            <p class="text-xs text-slate-500">Gewichts-/Volumenverlauf je Übung im Vergleich zum Bizepssehnen-Schmerz (0–10)</p>
+          </div>
+          <select id="stat-upper-select" onchange="renderUpperProgressChart()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 sm:min-w-[240px]">
+            <option value="">Übung wählen...</option>
+          </select>
+        </div>
+        <div class="relative h-64 sm:h-72 w-full">
+          <canvas id="chart-upper-progress"></canvas>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =====================================================================
+       MOBILE BOTTOM NAVIGATION (5 TABS)
+       ===================================================================== -->
+  <nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg px-1.5 py-1.5">
+    <div class="grid grid-cols-5 gap-1 max-w-lg mx-auto">
+      <button onclick="switchTab('uebersicht')" data-nav="uebersicht" class="nav-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+        <span>Übersicht</span>
+      </button>
+      <button onclick="switchTab('training')" data-nav="training" class="nav-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+        <span>Training</span>
+      </button>
+      <button onclick="switchTab('handstand')" data-nav="handstand" class="nav-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        <span>Handstand</span>
+      </button>
+      <button onclick="switchTab('kalender')" data-nav="kalender" class="nav-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        <span>Kalender</span>
+      </button>
+      <button onclick="switchTab('statistik')" data-nav="statistik" class="nav-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
+        <span>Statistik</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- =====================================================================
+       MODALS (DATA & DEMO, CUSTOM EXERCISE, CONFIRM DIALOG)
+       ===================================================================== -->
+
+  <!-- Modal: Daten & Demo -->
+  <div id="modal-data" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-5 space-y-4 shadow-2xl animate-fade">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-slate-900">Daten &amp; Demo-Verwaltung</h3>
+        <button onclick="closeDataModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <p class="text-xs text-slate-600">Alle Eingaben werden automatisch lokal in deinem Browser (LocalStorage) gespeichert. Exportiere jederzeit einen Physio-Bericht oder ein vollständiges Backup.</p>
+      <div class="space-y-2.5">
+        <button onclick="promptLoadDemoData()" class="w-full px-4 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold text-xs sm:text-sm flex items-center justify-between">
+          <span>4-Wochen-Demo-Daten laden</span>
+          <span class="text-[11px] font-semibold">Testverlauf</span>
+        </button>
+        <button onclick="exportCSV()" class="w-full px-4 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs sm:text-sm flex items-center justify-between">
+          <span>CSV-Export (Physio- &amp; Trainingsbericht)</span>
+          <span class="text-[11px] font-mono">.csv</span>
+        </button>
+        <button onclick="exportJSON()" class="w-full px-4 py-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-900 font-bold text-xs sm:text-sm flex items-center justify-between">
+          <span>JSON-Backup exportieren</span>
+          <span class="text-[11px] font-mono">.json</span>
+        </button>
+        <label class="w-full px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 font-bold text-xs sm:text-sm flex items-center justify-between cursor-pointer">
+          <span>JSON-Backup importieren</span>
+          <span class="text-[11px] font-semibold text-slate-500">Datei wählen</span>
+          <input type="file" accept=".json" onchange="importJSON(event)" class="hidden" />
+        </label>
+        <div class="pt-2 border-t border-slate-200">
+          <button onclick="promptResetAll()" class="w-full px-4 py-3 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs sm:text-sm flex items-center justify-between">
+            <span>Alle Daten zurücksetzen</span>
+            <span class="text-[11px]">Reset</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Exercise -->
+  <div id="modal-custom-ex" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-5 space-y-4 shadow-2xl animate-fade">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-slate-900">Eigene Übung hinzufügen</h3>
+        <button onclick="closeCustomExModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <div class="space-y-3">
+        <input type="hidden" id="cex-target" value="knee" />
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Übungsname</label>
+          <input type="text" id="cex-name" placeholder="z. B. Spanische Kniebeuge (Physio)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Messart</label>
+          <select id="cex-metric" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900">
+            <option value="reps">Wiederholungen + kg</option>
+            <option value="sec">Sekunden (Halten)</option>
+            <option value="min">Minuten (Cardio)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Technik-Badge / Hinweis</label>
+          <input type="text" id="cex-cue" placeholder="z. B. Max. 60°, 3s langsam absenken" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeCustomExModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">Abbrechen</button>
+        <button onclick="confirmAddCustomExercise()" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold">Hinzufügen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Confirm Dialog (replaces alert/confirm) -->
+  <div id="modal-confirm" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 max-w-sm w-full p-5 space-y-4 shadow-2xl animate-fade">
+      <h3 id="confirm-title" class="text-base font-extrabold text-slate-900">Bestätigung</h3>
+      <p id="confirm-msg" class="text-xs sm:text-sm text-slate-600 leading-relaxed"></p>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeConfirm()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">Abbrechen</button>
+        <button id="confirm-ok-btn" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">Bestätigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-root" class="fixed top-16 right-4 z-50 space-y-2 pointer-events-none max-w-xs w-full"></div>
+
+  <!-- =====================================================================
+       APPLICATION JAVASCRIPT
+       ===================================================================== -->
+  <script>
+    /* =====================================================================
+       1. CONSTANTS, EXERCISE CATALOG & HANDSTAND ROADMAP
+       ===================================================================== */
+    const STORAGE_KEY = 'reha_gym_handstand_v2';
+    const PHASE_2_START = '2026-12-08';
+
+    const DEFAULT_PHYSIO_DATES = [
+      { id: 'ph-1', date: '2026-12-16', note: 'Ersttermin Physio – Befund Patellarsehne & Freigabe Belastung' },
+      { id: 'ph-2', date: '2026-12-23', note: 'Physiotherapie Knie – Kein Gym geplant' },
+      { id: 'ph-3', date: '2027-01-04', note: 'Physiotherapie Knie – Progression HSR-Training' },
+      { id: 'ph-4', date: '2027-01-11', note: 'Physiotherapie Knie – Kein Gym geplant' },
+      { id: 'ph-5', date: '2027-01-19', note: 'Physiotherapie Knie – Kein Gym geplant' },
+      { id: 'ph-6', date: '2027-01-26', note: 'Physiotherapie Knie – Zwischenbilanz & Rückkehr Volleyball-Basis' }
+    ];
+
+    // 4-Stage Handstand Roadmap (from mastered 60s Wall Baseline)
+    const HANDSTAND_LEVELS = [
+      {
+        level: 1,
+        title: 'Stufe 1: Wand-Balance & Fingerkontrolle',
+        shortTitle: 'Wand-Balance & Fingerkontrolle',
+        goalText: 'Aufstiegskriterium: 5× 5–10s kontrolliertes Ablösen',
+        drills: [
+          { name: 'Chest-to-Wall Ausrichtung (60s)', mode: 'wand', defaultSec: 60 },
+          { name: 'Toe Pulls (Bauch zur Wand, sanft ablösen)', mode: 'abloesen', defaultSec: 7 },
+          { name: 'Heel Pulls (Rücken zur Wand, Fingerdruck)', mode: 'abloesen', defaultSec: 7 }
+        ],
+        cues: 'Bauch zur Wand (Chest-to-Wall) erzwingt saubere Becken- & Schulterlinie. Korrigiere Balance aktiv über die Fingerkuppen (Handballen = zurück, Finger = nach vorne). Schultern hoch zu den Ohren (Elevation).'
+      },
+      {
+        level: 2,
+        title: 'Stufe 2: Split-Balance & sicherer Ausstieg',
+        shortTitle: 'Split-Balance & Pirouette Bail',
+        goalText: 'Aufstiegskriterium: 3× 15s frei + sichere Abgänge',
+        drills: [
+          { name: 'Chest-to-Wall Split/Scissor-Ablösen', mode: 'abloesen', defaultSec: 12 },
+          { name: 'Pirouette Bail (kontrolliert seitlich absteigen)', mode: 'abloesen', defaultSec: 6 },
+          { name: 'Freie Kurz-Holds (5–15s)', mode: 'frei', defaultSec: 12 }
+        ],
+        cues: 'Pirouette Bail gezielt üben, damit du nie aufs rechte Knie abspringst! Beim Split ein Bein an der Wand leicht lösen, Hüfte zentrieren, dann sanft schließen.'
+      },
+      {
+        level: 3,
+        title: 'Stufe 3: Freier Handstand 10–30s',
+        shortTitle: 'Freier Handstand (10–30s)',
+        goalText: 'Aufstiegskriterium: 3× 25–30s konstant frei',
+        drills: [
+          { name: 'Kontrollierter Einstieg (links abdrücken)', mode: 'frei', defaultSec: 15 },
+          { name: 'Freie Holds (10–30s)', mode: 'frei', defaultSec: 22 },
+          { name: 'Fingerdruck-Korrektur (Über-/Unterbalance)', mode: 'frei', defaultSec: 20 }
+        ],
+        cues: 'Drücke dich beim Einstieg primär mit dem gesunden linken Bein sanft ab – kein explosives Springen rechts. Blick ruhig zwischen den Händen halten, ruhige Atmung.'
+      },
+      {
+        level: 4,
+        title: 'Stufe 4: Stabiler Freier Handstand 30–60s',
+        shortTitle: 'Stabiler Freier Handstand (30–60s)',
+        goalText: 'Ziel: Konstante 30–60s freie Holds & Übergänge',
+        drills: [
+          { name: 'Freier Handstand (30–60s)', mode: 'frei', defaultSec: 40 },
+          { name: 'Tuck / Straddle-Übergänge (frei)', mode: 'frei', defaultSec: 30 },
+          { name: 'Weiches kontrolliertes Absetzen', mode: 'frei', defaultSec: 35 }
+        ],
+        cues: 'Volle Linie mit Rippen geschlossen und Gesäß leicht angespannt. Handgelenke weiterhin vor jeder Einheit aufwärmen.'
+      }
+    ];
+
+    // Exercise Templates
+    const KNEE_HOME_EXERCISES = [
+      {
+        name: 'Wall Sit (45–60° Winkel)',
+        metric: 'sec', useWeight: false, target: '4–5 × 45 Sek.', defaultSets: 4, defaultReps: 45, defaultWeight: 0,
+        badge: 'Max. 60° • Statisch schmerzlindernd'
+      },
+      {
+        name: 'Einbeinige Glute Bridges',
+        metric: 'reps', useWeight: false, target: '3 × 12 Wdh./Seite', defaultSets: 3, defaultReps: 12, defaultWeight: 0,
+        badge: 'Beinachse & Gesäß-Stabilität'
+      },
+      {
+        name: 'Wadenheben stehend',
+        metric: 'reps', useWeight: true, target: '3 × 15 Wdh.', defaultSets: 3, defaultReps: 15, defaultWeight: 0,
+        badge: 'Langsam & volle Amplitude'
+      },
+      {
+        name: 'Side-Lying Hip Abductions',
+        metric: 'reps', useWeight: false, target: '3 × 15 Wdh./Seite', defaultSets: 3, defaultReps: 15, defaultWeight: 0,
+        badge: 'Hüft-Abduktoren ohne Knie-Stress'
+      }
+    ];
+
+    const KNEE_GYM_EXERCISES = [
+      {
+        name: 'Ergometer Warm-up',
+        metric: 'min', useWeight: false, target: '10 Min. (80–95 RPM)', defaultSets: 1, defaultReps: 10, defaultWeight: 0,
+        badge: 'Hoher Sattel • 80–95 RPM • Im Sitzen'
+      },
+      {
+        name: 'Flache Kniebeuge / Beinpresse (max. 60°)',
+        metric: 'reps', useWeight: true, target: '3 × 8–10 (3s/3s Tempo)', defaultSets: 3, defaultReps: 10, defaultWeight: 40,
+        badge: 'HSR 3s runter / 3s hoch • Max. 60°'
+      },
+      {
+        name: 'Langsames Beinstrecken (60°–0°)',
+        metric: 'reps', useWeight: true, target: '3 × 10 (3s/3s Tempo)', defaultSets: 3, defaultReps: 10, defaultWeight: 25,
+        badge: 'Nur 60° bis gestreckt • 3s/3s'
+      },
+      {
+        name: 'Glute Bridges / Wadenheben / Hip Abductions',
+        metric: 'reps', useWeight: true, target: '3 × 12–15 Wdh.', defaultSets: 3, defaultReps: 15, defaultWeight: 15,
+        badge: 'Beinachsen-Finish nach Wahl'
+      }
+    ];
+
+    const UPPER_A_EXERCISES = [
+      { name: 'Klimmzüge (Parallel-/Obergriff)', metric: 'reps', useWeight: true, target: '3 × 6–10 Wdh.', defaultSets: 3, defaultReps: 8, defaultWeight: 0, badge: 'Unten aktiv bleiben • 1–2 RIR' },
+      { name: 'Kabelzug-Brustdrücken', metric: 'reps', useWeight: true, target: '3 × 10–12 Wdh.', defaultSets: 3, defaultReps: 12, defaultWeight: 20, badge: 'Oberarme vor Rumpf • Bizepssehne sicher' },
+      { name: 'Brustgestütztes Rudern', metric: 'reps', useWeight: true, target: '3 × 10–12 Wdh.', defaultSets: 3, defaultReps: 12, defaultWeight: 40, badge: 'Schulterblätter tief & zusammen' },
+      { name: 'Kontrollierte Dips (max. 90°)', metric: 'reps', useWeight: true, target: '3 × 8–12 Wdh.', defaultSets: 3, defaultReps: 10, defaultWeight: 0, badge: 'Stopp max. 90° • Schultern tief!' },
+      { name: 'Face Pulls mit Außenrotation', metric: 'reps', useWeight: true, target: '3 × 12–15 Wdh.', defaultSets: 3, defaultReps: 15, defaultWeight: 15, badge: 'Daumen nach hinten (Doppelbizeps)' },
+      { name: 'KH-Seitheben Scaption 30°', metric: 'reps', useWeight: true, target: '3 × 12–15 Wdh.', defaultSets: 3, defaultReps: 14, defaultWeight: 7, badge: '30° vor Körper • Daumen neutral' },
+      { name: 'Kabelzug-Curls', metric: 'reps', useWeight: true, target: '3 × 10–12 Wdh.', defaultSets: 3, defaultReps: 12, defaultWeight: 20, badge: 'Ellenbogen leicht vor dem Körper!' },
+      { name: 'Overhead Trizeps Extensions', metric: 'reps', useWeight: true, target: '3 × 10–12 Wdh.', defaultSets: 3, defaultReps: 12, defaultWeight: 22.5, badge: 'Unten nicht ruckartig abfedern' }
+    ];
+
+    const UPPER_B_EXERCISES = [
+      { name: 'Latzug enger Parallelgriff / Pull-ups', metric: 'reps', useWeight: true, target: '3 × 10–12 Wdh.', defaultSets: 3, defaultReps: 10, defaultWeight: 55, badge: 'Neutralgriff • Platz unter Schulterdach' },
+      { name: 'Kabelzug-Brustdrücken / KH-Schrägbank max. 30°', metric: 'reps', useWeight: true, target: '3 × 10–12 Wdh.', defaultSets: 3, defaultReps: 10, defaultWeight: 20, badge: 'Max. 30° • Neutral-/45°-Griff' },
+      { name: 'Sitzendes Kabelrudern (breiter Neutralgriff)', metric: 'reps', useWeight: true, target: '3 × 10–12 Wdh.', defaultSets: 3, defaultReps: 12, defaultWeight: 45, badge: 'Aufrecht • Schultern weg von Ohren' },
+      { name: 'Kontrollierte Dips max. 90° / Liegestütze auf Griffen', metric: 'reps', useWeight: true, target: '3 × 10–12 Wdh.', defaultSets: 3, defaultReps: 12, defaultWeight: 0, badge: 'Max. 90° • Schultern aktiv tief' },
+      { name: 'Reverse Flys', metric: 'reps', useWeight: true, target: '3 × 12–15 Wdh.', defaultSets: 3, defaultReps: 15, defaultWeight: 12.5, badge: 'Hintere Schulter • Kein Schwung' },
+      { name: 'Einarmiges Kabelzug-Seitheben Scaption', metric: 'reps', useWeight: true, target: '3 × 12–15 Wdh.', defaultSets: 3, defaultReps: 14, defaultWeight: 5, badge: '30° vor dem Körper führen' },
+      { name: 'Kabelzug-/Hammer-Curls', metric: 'reps', useWeight: true, target: '3 × 10–12 Wdh.', defaultSets: 3, defaultReps: 12, defaultWeight: 12, badge: 'Ellenbogen strikt vor dem Körper!' },
+      { name: 'Overhead Trizeps Extensions', metric: 'reps', useWeight: true, target: '3 × 10–12 Wdh.', defaultSets: 3, defaultReps: 12, defaultWeight: 22.5, badge: 'Kontrollierte Dehnung • 1–2 RIR' }
+    ];
+
+    const WORKOUT_TYPES = [
+      { id: 'knee_home', label: 'Knie-Reha (Zuhause)', short: 'Knie Zuhause', phaseTag: 'Phase 1', color: 'blue', hasKnee: true, hasUpper: false, isHS: false },
+      { id: 'upper_a',   label: 'Oberkörper A (Gym)', short: 'Oberkörper A', phaseTag: 'Phase 1', color: 'indigo', hasKnee: false, hasUpper: true, isHS: false },
+      { id: 'upper_b',   label: 'Oberkörper B (Gym)', short: 'Oberkörper B', phaseTag: 'Phase 1', color: 'indigo', hasKnee: false, hasUpper: true, isHS: false },
+      { id: 'combo_a',   label: 'Kombi-Gym A (Knie + OK A)', short: 'Kombi-Gym A', phaseTag: 'Phase 2', color: 'violet', hasKnee: true, hasUpper: true, isHS: false },
+      { id: 'combo_b',   label: 'Kombi-Gym B (Knie + OK B)', short: 'Kombi-Gym B', phaseTag: 'Phase 2', color: 'violet', hasKnee: true, hasUpper: true, isHS: false },
+      { id: 'handstand', label: 'Handstand-Session', short: 'Handstand', phaseTag: '15–20 Min.', color: 'amber', hasKnee: false, hasUpper: false, isHS: true },
+      { id: 'physio',    label: 'Physiotherapie-Protokoll', short: 'Physio', phaseTag: 'Kein Gym', color: 'emerald', hasKnee: true, hasUpper: false, isHS: false }
+    ];
+
+    /* =====================================================================
+       2. STATE & PERSISTENCE
+       ===================================================================== */
+    let appData = {
+      workouts: [],
+      physioDates: JSON.parse(JSON.stringify(DEFAULT_PHYSIO_DATES)),
+      activeHandstandLevel: 1,
+      manualPhase: null // null = auto by date, or 1 / 2
+    };
+
+    let ui = {
+      activeTab: 'uebersicht',
+      logDate: getTodayISO(),
+      selectedType: 'knee_home',
+      includeHandstandAddon: false,
+      editingId: null,
+      draftKneeExercises: [],
+      draftUpperExercises: [],
+      draftHsAttempts: [],
+      draftHsQuality: 4,
+      calYear: 2026,
+      calMonth: 10, // 0-indexed (Nov 2026)
+      calSelectedDate: getTodayISO(),
+      historyFilter: 'all'
+    };
+
+    const charts = {};
+    let confirmActionFn = null;
+
+    // Countdown Timer State
+    let cdState = { preset: 45, remaining: 45, running: false, timerId: null };
+    // Live Handstand Stopwatch State
+    let swState = { running: false, startTime: 0, elapsedMs: 0, rafId: null };
+
+    function getTodayISO() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function formatDE(iso) {
+      if (!iso) return '—';
+      const [y, m, d] = iso.split('-');
+      return `${d}.${m}.${y}`;
+    }
+
+    function getWeekdayDE(iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      return ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][new Date(y, m - 1, d).getDay()];
+    }
+
+    function getWeekBounds(isoDate) {
+      const [y, m, d] = isoDate.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      const day = (dt.getDay() + 6) % 7; // Mon = 0
+      const mon = new Date(dt);
+      mon.setDate(dt.getDate() - day);
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+      const toISO = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+      return { start: toISO(mon), end: toISO(sun) };
+    }
+
+    function getISOWeekInfo(iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      const dayNum = dt.getUTCDay() || 7;
+      dt.setUTCDate(dt.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+      const kw = Math.ceil((((dt - yearStart) / 86400000) + 1) / 7);
+      return { key: `${dt.getUTCFullYear()}-${String(kw).padStart(2, '0')}`, label: `KW ${kw}` };
+    }
+
+    function getEffectivePhase(isoDate) {
+      if (appData.manualPhase === 1 || appData.manualPhase === 2) return appData.manualPhase;
+      return (isoDate || getTodayISO()) >= PHASE_2_START ? 2 : 1;
+    }
+
+    function loadAppData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.workouts)) appData.workouts = parsed.workouts;
+          if (Array.isArray(parsed.physioDates) && parsed.physioDates.length) appData.physioDates = parsed.physioDates;
+          if (parsed.activeHandstandLevel) appData.activeHandstandLevel = Number(parsed.activeHandstandLevel);
+          if (parsed.manualPhase === 1 || parsed.manualPhase === 2 || parsed.manualPhase === null) {
+            appData.manualPhase = parsed.manualPhase;
+          }
+        }
+      } catch (err) {
+        console.error('LocalStorage load error:', err);
+      }
+    }
+
+    function saveAppData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      } catch (err) {
+        console.error('LocalStorage save error:', err);
+        showToast('Konnte Daten nicht im Browser speichern.', 'error');
+      }
+    }
+
+    /* =====================================================================
+       3. INITIALIZATION & TAB SWITCHING
+       ===================================================================== */
+    function initApp() {
+      loadAppData();
+      const today = getTodayISO();
+      const [ty, tm] = today.split('-').map(Number);
+      ui.logDate = today;
+      ui.calSelectedDate = today;
+      ui.calYear = ty;
+      ui.calMonth = tm - 1;
+
+      const dateInput = document.getElementById('log-date');
+      dateInput.value = today;
+      dateInput.addEventListener('change', (e) => {
+        ui.logDate = e.target.value || getTodayISO();
+        updateLoggerPhaseAndPhysio();
+      });
+
+      document.getElementById('hs-session-level').value = String(appData.activeHandstandLevel);
+      renderQualityStars();
+      selectWorkoutType(getEffectivePhase(today) === 2 ? 'combo_a' : 'knee_home');
+      switchTab('uebersicht');
+    }
+
+    function switchTab(tabName) {
+      ui.activeTab = tabName;
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      const active = document.getElementById(`tab-${tabName}`);
+      if (active) active.classList.remove('hidden');
+
+      // Desktop nav styles
+      document.querySelectorAll('.nav-desktop').forEach(btn => {
+        const isCurrent = btn.dataset.nav === tabName;
+        btn.className = isCurrent
+          ? 'nav-desktop px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all bg-white text-slate-900 shadow-sm'
+          : 'nav-desktop px-3.5 py-2 rounded-lg text-xs font-bold transition-all text-slate-300 hover:text-white hover:bg-slate-700/70';
+      });
+
+      // Mobile nav styles
+      document.querySelectorAll('.nav-mobile').forEach(btn => {
+        const isCurrent = btn.dataset.nav === tabName;
+        const activeColor = tabName === 'handstand' ? 'text-amber-600 bg-amber-50' : 'text-blue-600 bg-blue-50';
+        btn.className = isCurrent
+          ? `nav-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-extrabold transition-all ${activeColor}`
+          : 'nav-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition-all text-slate-500 hover:text-slate-800';
+      });
+
+      if (tabName === 'uebersicht') renderOverviewTab();
+      if (tabName === 'training') {
+        updateLoggerPhaseAndPhysio();
+        renderWorkoutTypeGrid();
+      }
+      if (tabName === 'handstand') renderHandstandTab();
+      if (tabName === 'kalender') renderCalendarAndHistoryTab();
+      if (tabName === 'statistik') renderStatisticsTab();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setGlobalPhase(phaseNum, isManual) {
+      appData.manualPhase = isManual ? phaseNum : null;
+      saveAppData();
+      if (ui.activeTab === 'uebersicht') renderOverviewTab();
+      updateLoggerPhaseAndPhysio();
+      renderWorkoutTypeGrid();
+      showToast(`Phase ${phaseNum} aktiviert.`, 'info');
+    }
+
+    function resetPhaseAuto() {
+      appData.manualPhase = null;
+      saveAppData();
+      renderOverviewTab();
+      updateLoggerPhaseAndPhysio();
+      showToast('Phasen-Automatik (Wechsel ab 08.12.2026) aktiv.', 'info');
+    }
+
+    /* =====================================================================
+       4. TAB 1: ÜBERSICHT (OVERVIEW DASHBOARD)
+       ===================================================================== */
+    function renderOverviewTab() {
+      const today = getTodayISO();
+      const phase = getEffectivePhase(today);
+      document.getElementById('ov-today-date').textContent = `${getWeekdayDE(today)}, ${formatDE(today)}`;
+
+      // Phase Card
+      const badge = document.getElementById('ov-phase-badge');
+      badge.textContent = `Phase ${phase} aktiv`;
+      badge.className = phase === 1
+        ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800'
+        : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-violet-100 text-violet-800';
+
+      document.getElementById('ov-phase-mode').textContent = appData.manualPhase
+        ? 'Manuell eingestellt'
+        : (phase === 1 ? 'Automatik (25.11.–07.12.2026)' : 'Automatik (ab 08.12.2026)');
+
+      document.getElementById('ov-phase-title').textContent = phase === 1
+        ? '3× Knie Zuhause + 3× Gym OK + 3× Handstand'
+        : '3× Gym Kombi-Tage (Knie + OK) + 3× Handstand';
+
+      document.getElementById('ov-phase-desc').textContent = phase === 1
+        ? 'Erste 2 Wochen isometrische Sehnenberuhigung Zuhause, ab 08.12.2026 Wechsel auf Kombi-Gym.'
+        : 'Knie-HSR (Beinpresse/Beinstrecken) und Oberkörper A/B gemeinsam an 3 Gym-Tagen + frischer Handstand.';
+
+      document.getElementById('ov-btn-p1').className = phase === 1
+        ? 'px-3 py-1.5 rounded-lg text-xs font-extrabold bg-blue-600 text-white shadow-sm'
+        : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900';
+      document.getElementById('ov-btn-p2').className = phase === 2
+        ? 'px-3 py-1.5 rounded-lg text-xs font-extrabold bg-violet-600 text-white shadow-sm'
+        : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900';
+
+      // Next Physio Countdown
+      const nextPh = [...appData.physioDates]
+        .filter(p => p.date >= today)
+        .sort((a, b) => a.date.localeCompare(b.date))[0];
+      if (nextPh) {
+        document.getElementById('ov-physio-date').textContent = formatDE(nextPh.date);
+        const [y1, m1, d1] = today.split('-').map(Number);
+        const [y2, m2, d2] = nextPh.date.split('-').map(Number);
+        const diff = Math.round((new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1)) / 86400000);
+        document.getElementById('ov-physio-countdown').textContent =
+          diff === 0 ? 'Heute – kein Gym geplant!' : diff === 1 ? `Morgen (${getWeekdayDE(nextPh.date)})` : `in ${diff} Tagen (${getWeekdayDE(nextPh.date)})`;
+      } else {
+        document.getElementById('ov-physio-date').textContent = 'Alle absolviert';
+        document.getElementById('ov-physio-countdown').textContent = 'Keine offenen Termine';
+      }
+
+      // Weekly Goals (Current Week Mon-Sun)
+      const bounds = getWeekBounds(today);
+      document.getElementById('ov-week-label').textContent = `${getISOWeekInfo(today).label} (${formatDE(bounds.start).slice(0,5)} – ${formatDE(bounds.end).slice(0,5)})`;
+      const weekWorkouts = appData.workouts.filter(w => w.date >= bounds.start && w.date <= bounds.end);
+
+      const kneeCnt = weekWorkouts.filter(w => w.hasKnee && w.type !== 'physio').length;
+      const upperCnt = weekWorkouts.filter(w => w.hasUpper).length;
+      const hsCnt = weekWorkouts.filter(w => w.hasHandstand).length;
+
+      document.getElementById('goal-knee-text').textContent = `${kneeCnt} / 3`;
+      document.getElementById('goal-knee-bar').style.width = `${Math.min(100, (kneeCnt / 3) * 100)}%`;
+
+      document.getElementById('goal-upper-text').textContent = `${upperCnt} / 3`;
+      document.getElementById('goal-upper-bar').style.width = `${Math.min(100, (upperCnt / 3) * 100)}%`;
+
+      document.getElementById('goal-hs-text').textContent = `${hsCnt} / 3`;
+      document.getElementById('goal-hs-bar').style.width = `${Math.min(100, (hsCnt / 3) * 100)}%`;
+
+      // Handstand Status Card
+      const hsMetrics = computeHandstandMetrics();
+      const activeLvl = HANDSTAND_LEVELS.find(l => l.level === appData.activeHandstandLevel) || HANDSTAND_LEVELS[0];
+      document.getElementById('ov-hs-level-title').textContent = activeLvl.title;
+      document.getElementById('ov-hs-level-sub').textContent = activeLvl.goalText;
+      document.getElementById('ov-hs-pb').textContent = `${hsMetrics.pbFree} s`;
+      document.getElementById('ov-hs-stage-num').textContent = `${appData.activeHandstandLevel} / 4`;
+
+      // Open 24h Knee Checks
+      const openChecks = appData.workouts
+        .filter(w => w.hasKnee && w.knee && (w.knee.pain24h === null || w.knee.pain24h === undefined))
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+      const openWrap = document.getElementById('ov-open-24h-container');
+      const openList = document.getElementById('ov-open-24h-list');
+      if (openChecks.length === 0) {
+        openWrap.classList.add('hidden');
+      } else {
+        openWrap.classList.remove('hidden');
+        openList.innerHTML = openChecks.map(w => `
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-extrabold text-slate-900">${w.title}</span>
+                <span class="text-xs text-slate-500 ml-1.5">(${getWeekdayDE(w.date)}, ${formatDE(w.date)} • Winkel ${w.knee.angle}°)</span>
+              </div>
+              <span id="ov24-val-${w.id}" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">1 / 10</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <input type="range" id="ov24-slider-${w.id}" min="0" max="10" step="1" value="1" oninput="updateQuick24hUI('ov24', '${w.id}', this.value)" class="w-full slider-emerald" />
+              <button onclick="saveQuick24h('ov24', '${w.id}')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shrink-0">Speichern</button>
+            </div>
+            <div id="ov24-warn-${w.id}" class="hidden text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1">
+              ⚠ Über 3/10 am Folgetag: Beim nächsten Training Kniewinkel oder Gewicht etwas reduzieren!
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function updateQuick24hUI(prefix, id, val) {
+      const n = Number(val);
+      const badge = document.getElementById(`${prefix}-val-${id}`);
+      const warn = document.getElementById(`${prefix}-warn-${id}`);
+      if (badge) {
+        badge.textContent = `${n} / 10`;
+        badge.className = n <= 3
+          ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700'
+          : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700';
+      }
+      if (warn) warn.classList.toggle('hidden', n <= 3);
+    }
+
+    function saveQuick24h(prefix, id) {
+      const slider = document.getElementById(`${prefix}-slider-${id}`);
+      if (!slider) return;
+      const w = appData.workouts.find(x => x.id === id);
+      if (!w || !w.knee) return;
+      w.knee.pain24h = Number(slider.value);
+      saveAppData();
+      if (ui.activeTab === 'uebersicht') renderOverviewTab();
+      if (ui.activeTab === 'kalender') renderCalendarAndHistoryTab();
+      showToast(
+        w.knee.pain24h <= 3
+          ? `24h-Check (${w.knee.pain24h}/10) gespeichert – grüner Bereich!`
+          : `24h-Check (${w.knee.pain24h}/10) gespeichert – nächstes Mal Reiz etwas reduzieren!`,
+        w.knee.pain24h <= 3 ? 'success' : 'error'
+      );
+    }
+
+    function quickStartTraining(typeId, forcedDate = null) {
+      ui.editingId = null;
+      document.getElementById('log-edit-banner').classList.add('hidden');
+      document.getElementById('log-save-label').textContent = 'Trainingseinheit speichern';
+      ui.logDate = forcedDate || getTodayISO();
+      document.getElementById('log-date').value = ui.logDate;
+      selectWorkoutType(typeId);
+      switchTab('training');
+    }
+
+    /* =====================================================================
+       5. TAB 2: TRAINING LOGGER (KNEE, UPPER, HANDSTAND, STOPWATCH, TIMER)
+       ===================================================================== */
+    function setLogToday() {
+      ui.logDate = getTodayISO();
+      document.getElementById('log-date').value = ui.logDate;
+      updateLoggerPhaseAndPhysio();
+    }
+
+    function updateLoggerPhaseAndPhysio() {
+      const phase = getEffectivePhase(ui.logDate);
+      document.getElementById('log-phase-badge').textContent = appData.manualPhase ? `Phase ${phase} (manuell)` : `Phase ${phase} (Auto)`;
+      document.getElementById('log-btn-p1').className = phase === 1
+        ? 'py-2 rounded-lg text-xs font-extrabold bg-blue-600 text-white shadow-sm'
+        : 'py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900';
+      document.getElementById('log-btn-p2').className = phase === 2
+        ? 'py-2 rounded-lg text-xs font-extrabold bg-violet-600 text-white shadow-sm'
+        : 'py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900';
+
+      const physio = appData.physioDates.find(p => p.date === ui.logDate);
+      const warn = document.getElementById('log-physio-warning');
+      if (physio) {
+        warn.classList.remove('hidden');
+        document.getElementById('log-physio-note').textContent = physio.note
+          ? `Termin-Notiz: „${physio.note}“ – Heute kein Gym geplant.`
+          : 'Dokumentiere deinen Termin im Physio-Protokoll inkl. Kniewinkel & Therapeuten-Feedback.';
+      } else {
+        warn.classList.add('hidden');
+      }
+    }
+
+    function renderWorkoutTypeGrid() {
+      const grid = document.getElementById('workout-type-grid');
+      const currentPhase = getEffectivePhase(ui.logDate);
+      const colorStyles = {
+        blue:    { active: 'bg-blue-600 text-white border-blue-600 shadow-sm', idle: 'bg-blue-50/60 text-blue-900 border-blue-200 hover:bg-blue-100/70' },
+        indigo:  { active: 'bg-indigo-600 text-white border-indigo-600 shadow-sm', idle: 'bg-indigo-50/60 text-indigo-900 border-indigo-200 hover:bg-indigo-100/70' },
+        violet:  { active: 'bg-violet-600 text-white border-violet-600 shadow-sm', idle: 'bg-violet-50/60 text-violet-900 border-violet-200 hover:bg-violet-100/70' },
+        amber:   { active: 'bg-amber-500 text-white border-amber-500 shadow-sm', idle: 'bg-amber-50/70 text-amber-900 border-amber-200 hover:bg-amber-100/80' },
+        emerald: { active: 'bg-emerald-600 text-white border-emerald-600 shadow-sm', idle: 'bg-emerald-50/60 text-emerald-900 border-emerald-200 hover:bg-emerald-100/70' }
+      };
+
+      grid.innerHTML = WORKOUT_TYPES.map(t => {
+        const isSel = ui.selectedType === t.id;
+        const st = colorStyles[t.color][isSel ? 'active' : 'idle'];
+        const dim = ((t.phaseTag === 'Phase 1' && currentPhase === 2) || (t.phaseTag === 'Phase 2' && currentPhase === 1)) && !isSel ? 'opacity-65' : '';
+        return `
+          <button onclick="selectWorkoutType('${t.id}')" class="p-2.5 rounded-xl border text-left transition-all ${st} ${dim}">
+            <div class="text-xs font-extrabold leading-snug">${t.short}</div>
+            <div class="text-[10px] mt-0.5 ${isSel ? 'text-white/85' : 'opacity-75'}">${t.phaseTag}</div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function getLastExercisePerf(exerciseName, sectionKey) {
+      const sorted = [...appData.workouts].sort((a, b) => b.date.localeCompare(a.date));
+      for (const w of sorted) {
+        if (w.id === ui.editingId) continue;
+        const block = w[sectionKey];
+        if (!block || !Array.isArray(block.exercises)) continue;
+        const match = block.exercises.find(e => e.name === exerciseName);
+        if (match && match.sets && match.sets.some(s => s.done)) {
+          return { date: w.date, ex: match };
+        }
+      }
+      return null;
+    }
+
+    function formatLastPerfText(rec) {
+      if (!rec) return '';
+      const done = rec.ex.sets.filter(s => s.done);
+      if (!done.length) return '';
+      const maxR = Math.max(...done.map(s => Number(s.reps) || 0));
+      const maxW = Math.max(...done.map(s => Number(s.weight) || 0));
+      if (rec.ex.metric === 'sec') return `Letztes Mal (${formatDE(rec.date)}): ${done.length}×${maxR}s`;
+      if (rec.ex.metric === 'min') return `Letztes Mal (${formatDE(rec.date)}): ${maxR} Min.`;
+      if (rec.ex.useWeight && maxW > 0) return `Letztes Mal (${formatDE(rec.date)}): ${done.length}×${maxR} @ ${maxW} kg`;
+      return `Letztes Mal (${formatDE(rec.date)}): ${done.length}×${maxR} Wdh.`;
+    }
+
+    function buildDraftFromCatalog(catalog, sectionKey) {
+      return catalog.map(ex => {
+        const last = getLastExercisePerf(ex.name, sectionKey);
+        const lastDone = last ? last.ex.sets.filter(s => s.done) : [];
+        const sets = Array.from({ length: ex.defaultSets }, (_, i) => {
+          const prev = lastDone[i] || lastDone[lastDone.length - 1];
+          return {
+            done: false,
+            weight: prev && ex.useWeight ? prev.weight : ex.defaultWeight,
+            reps: prev ? prev.reps : ex.defaultReps,
+            rir: sectionKey === 'upper' ? 2 : ''
+          };
+        });
+        return {
+          name: ex.name,
+          metric: ex.metric,
+          useWeight: ex.useWeight,
+          target: ex.target,
+          badge: ex.badge,
+          sets
+        };
+      });
+    }
+
+    function selectWorkoutType(typeId) {
+      ui.selectedType = typeId;
+      const meta = WORKOUT_TYPES.find(t => t.id === typeId) || WORKOUT_TYPES[0];
+
+      // Reset standalone vs addon toggle
+      if (meta.isHS) {
+        ui.includeHandstandAddon = false;
+        document.getElementById('toggle-handstand-addon').checked = false;
+        document.getElementById('handstand-addon-row').classList.add('hidden');
+      } else {
+        document.getElementById('handstand-addon-row').classList.remove('hidden');
+      }
+
+      // Build exercise drafts if not currently loading an edited workout
+      if (!ui.editingId) {
+        if (typeId === 'knee_home') {
+          ui.draftKneeExercises = buildDraftFromCatalog(KNEE_HOME_EXERCISES, 'knee');
+          ui.draftUpperExercises = [];
+        } else if (typeId === 'upper_a') {
+          ui.draftKneeExercises = [];
+          ui.draftUpperExercises = buildDraftFromCatalog(UPPER_A_EXERCISES, 'upper');
+        } else if (typeId === 'upper_b') {
+          ui.draftKneeExercises = [];
+          ui.draftUpperExercises = buildDraftFromCatalog(UPPER_B_EXERCISES, 'upper');
+        } else if (typeId === 'combo_a') {
+          ui.draftKneeExercises = buildDraftFromCatalog(KNEE_GYM_EXERCISES, 'knee');
+          ui.draftUpperExercises = buildDraftFromCatalog(UPPER_A_EXERCISES, 'upper');
+        } else if (typeId === 'combo_b') {
+          ui.draftKneeExercises = buildDraftFromCatalog(KNEE_GYM_EXERCISES, 'knee');
+          ui.draftUpperExercises = buildDraftFromCatalog(UPPER_B_EXERCISES, 'upper');
+        } else if (typeId === 'physio') {
+          ui.draftKneeExercises = [{
+            name: 'Physiotherapie-Behandlung & Befund',
+            metric: 'min', useWeight: false, target: '1 × 30 Min.',
+            badge: 'Manuelle Therapie / Übungsanpassung',
+            sets: [{ done: true, weight: 0, reps: 30, rir: '' }]
+          }];
+          ui.draftUpperExercises = [];
+        } else {
+          ui.draftKneeExercises = [];
+          ui.draftUpperExercises = [];
+        }
+
+        ui.draftHsAttempts = [];
+        document.getElementById('hs-check-1').checked = false;
+        document.getElementById('hs-check-2').checked = false;
+        document.getElementById('hs-check-3').checked = false;
+        document.getElementById('hs-session-level').value = String(appData.activeHandstandLevel);
+        document.getElementById('log-knee-24h-open').checked = true;
+        toggleLog24hOpen();
+        document.getElementById('log-notes').value = '';
+      }
+
+      updateLoggerSectionsVisibility();
+      renderWorkoutTypeGrid();
+      renderExerciseSection('knee');
+      renderExerciseSection('upper');
+      onHandstandLevelSelectChange();
+      renderHandstandAttempts();
+      updateAllPainUI();
+    }
+
+    function onToggleHandstandAddon() {
+      ui.includeHandstandAddon = document.getElementById('toggle-handstand-addon').checked;
+      updateLoggerSectionsVisibility();
+      if (ui.includeHandstandAddon) {
+        onHandstandLevelSelectChange();
+        renderHandstandAttempts();
+      }
+    }
+
+    function updateLoggerSectionsVisibility() {
+      const meta = WORKOUT_TYPES.find(t => t.id === ui.selectedType) || WORKOUT_TYPES[0];
+      const showHS = meta.isHS || ui.includeHandstandAddon;
+      document.getElementById('section-handstand-block').classList.toggle('hidden', !showHS);
+      document.getElementById('section-knee-block').classList.toggle('hidden', !meta.hasKnee);
+      document.getElementById('section-upper-block').classList.toggle('hidden', !meta.hasUpper);
+      document.getElementById('section-physio-block').classList.toggle('hidden', ui.selectedType !== 'physio');
+
+      if (meta.hasKnee) {
+        document.getElementById('knee-block-title').textContent =
+          ui.selectedType === 'physio' ? 'Physiotherapie-Dokumentation'
+            : (ui.selectedType === 'knee_home' ? 'Knie-Reha Zuhause (Phase 1)' : 'Knie-Reha im Gym (Phase 2 HSR)');
+      }
+      if (meta.hasUpper) {
+        const isA = ui.selectedType === 'upper_a' || ui.selectedType === 'combo_a';
+        document.getElementById('upper-block-title').textContent =
+          `Oberkörper Einheit ${isA ? 'A' : 'B'} • Immer 1–2 RIR im Tank lassen`;
+      }
+    }
+
+    function renderExerciseSection(sectionKey) {
+      const list = sectionKey === 'knee' ? ui.draftKneeExercises : ui.draftUpperExercises;
+      const container = document.getElementById(sectionKey === 'knee' ? 'knee-exercises-list' : 'upper-exercises-list');
+      const accentBorder = sectionKey === 'knee' ? 'border-blue-200' : 'border-indigo-200';
+      const badgeColors = sectionKey === 'knee' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200';
+
+      container.innerHTML = list.map((ex, exIdx) => {
+        const lastRec = getLastExercisePerf(ex.name, sectionKey);
+        const lastTxt = formatLastPerfText(lastRec);
+        const unitLabel = ex.metric === 'sec' ? 'Sek.' : ex.metric === 'min' ? 'Min.' : 'Wdh.';
+        const doneCount = ex.sets.filter(s => s.done).length;
+        const allDone = ex.sets.length > 0 && doneCount === ex.sets.length;
+
+        const rows = ex.sets.map((s, sIdx) => `
+          <div class="grid ${ex.useWeight ? 'grid-cols-12' : 'grid-cols-10'} items-center gap-1.5 sm:gap-2 p-1.5 rounded-xl border ${s.done ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-50 border-slate-200'}">
+            <div class="col-span-2 flex items-center gap-1.5">
+              <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleExSetDone('${sectionKey}', ${exIdx}, ${sIdx})" class="touch-check" />
+              <span class="text-xs font-bold text-slate-500">#${sIdx + 1}</span>
+            </div>
+            ${ex.useWeight ? `
+              <div class="col-span-3">
+                <input type="number" step="0.5" min="0" value="${s.weight}" oninput="updateExSetVal('${sectionKey}', ${exIdx}, ${sIdx}, 'weight', this.value)" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-center text-xs sm:text-sm font-bold text-slate-900" placeholder="kg" />
+              </div>
+            ` : ''}
+            <div class="${ex.useWeight ? 'col-span-3' : 'col-span-4'}">
+              <input type="number" step="1" min="0" value="${s.reps}" oninput="updateExSetVal('${sectionKey}', ${exIdx}, ${sIdx}, 'reps', this.value)" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-center text-xs sm:text-sm font-bold text-slate-900" placeholder="${unitLabel}" />
+            </div>
+            <div class="col-span-3">
+              <input type="number" step="1" min="0" max="10" value="${s.rir}" oninput="updateExSetVal('${sectionKey}', ${exIdx}, ${sIdx}, 'rir', this.value)" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-center text-xs sm:text-sm font-semibold text-slate-700" placeholder="${sectionKey === 'upper' ? '1–2' : '—'}" />
+            </div>
+            <div class="col-span-1 flex justify-end">
+              <button onclick="removeExSet('${sectionKey}', ${exIdx}, ${sIdx})" class="p-1 text-slate-400 hover:text-rose-600" title="Satz entfernen">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        return `
+          <div class="bg-white rounded-2xl border ${allDone ? 'border-emerald-400 ring-1 ring-emerald-200' : accentBorder} shadow-sm p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="space-y-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${badgeColors}">${ex.badge || 'Kontrolliert'}</span>
+                  <span class="text-[11px] font-semibold text-slate-500">${ex.target || ''}</span>
+                </div>
+                <h4 class="text-sm sm:text-base font-extrabold text-slate-900">${ex.name}</h4>
+                ${lastTxt ? `<div class="text-[11px] font-semibold text-blue-600">${lastTxt}</div>` : ''}
+              </div>
+              <button onclick="removeDraftExercise('${sectionKey}', ${exIdx})" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50" title="Übung entfernen">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+
+            <div class="grid ${ex.useWeight ? 'grid-cols-12' : 'grid-cols-10'} gap-1.5 px-1.5 text-[10px] font-bold uppercase text-slate-400">
+              <div class="col-span-2">Satz</div>
+              ${ex.useWeight ? '<div class="col-span-3 text-center">Gewicht (kg)</div>' : ''}
+              <div class="${ex.useWeight ? 'col-span-3' : 'col-span-4'} text-center">${unitLabel}</div>
+              <div class="col-span-3 text-center">RIR</div>
+              <div class="col-span-1"></div>
+            </div>
+
+            <div class="space-y-1.5">${rows}</div>
+
+            <div class="flex items-center justify-between pt-1">
+              <button onclick="addExSet('${sectionKey}', ${exIdx})" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700">+ Satz</button>
+              <span class="text-xs font-bold ${allDone ? 'text-emerald-600' : 'text-slate-400'}">${doneCount} / ${ex.sets.length} abgehakt</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleExSetDone(sec, exIdx, sIdx) {
+      const list = sec === 'knee' ? ui.draftKneeExercises : ui.draftUpperExercises;
+      list[exIdx].sets[sIdx].done = !list[exIdx].sets[sIdx].done;
+      renderExerciseSection(sec);
+    }
+
+    function updateExSetVal(sec, exIdx, sIdx, field, val) {
+      const list = sec === 'knee' ? ui.draftKneeExercises : ui.draftUpperExercises;
+      list[exIdx].sets[sIdx][field] = val === '' ? '' : Number(val);
+    }
+
+    function addExSet(sec, exIdx) {
+      const list = sec === 'knee' ? ui.draftKneeExercises : ui.draftUpperExercises;
+      const sets = list[exIdx].sets;
+      const prev = sets[sets.length - 1] || { weight: 0, reps: 10, rir: '' };
+      sets.push({ done: false, weight: prev.weight, reps: prev.reps, rir: prev.rir });
+      renderExerciseSection(sec);
+    }
+
+    function removeExSet(sec, exIdx, sIdx) {
+      const list = sec === 'knee' ? ui.draftKneeExercises : ui.draftUpperExercises;
+      if (list[exIdx].sets.length <= 1) {
+        showToast('Mindestens 1 Satz erforderlich.', 'info');
+        return;
+      }
+      list[exIdx].sets.splice(sIdx, 1);
+      renderExerciseSection(sec);
+    }
+
+    function removeDraftExercise(sec, exIdx) {
+      const list = sec === 'knee' ? ui.draftKneeExercises : ui.draftUpperExercises;
+      list.splice(exIdx, 1);
+      renderExerciseSection(sec);
+    }
+
+    // Custom Exercise Modal
+    function openCustomExModal(targetSec) {
+      document.getElementById('cex-target').value = targetSec;
+      document.getElementById('cex-name').value = '';
+      document.getElementById('cex-cue').value = '';
+      document.getElementById('modal-custom-ex').classList.remove('hidden');
+      setTimeout(() => document.getElementById('cex-name').focus(), 40);
+    }
+    function closeCustomExModal() {
+      document.getElementById('modal-custom-ex').classList.add('hidden');
+    }
+    function confirmAddCustomExercise() {
+      const targetSec = document.getElementById('cex-target').value;
+      const name = document.getElementById('cex-name').value.trim();
+      const metric = document.getElementById('cex-metric').value;
+      const cue = document.getElementById('cex-cue').value.trim();
+      if (!name) {
+        showToast('Bitte einen Übungsnamen angeben.', 'error');
+        return;
+      }
+      const list = targetSec === 'knee' ? ui.draftKneeExercises : ui.draftUpperExercises;
+      const defReps = metric === 'sec' ? 45 : metric === 'min' ? 10 : 10;
+      list.push({
+        name, metric, useWeight: metric === 'reps', target: 'Individuell',
+        badge: cue || 'Individuelle Übung',
+        sets: [
+          { done: false, weight: 0, reps: defReps, rir: targetSec === 'upper' ? 2 : '' },
+          { done: false, weight: 0, reps: defReps, rir: targetSec === 'upper' ? 2 : '' },
+          { done: false, weight: 0, reps: defReps, rir: targetSec === 'upper' ? 2 : '' }
+        ]
+      });
+      closeCustomExModal();
+      renderExerciseSection(targetSec);
+      showToast(`„${name}“ hinzugefügt.`, 'success');
+    }
+
+    /* ----- Handstand Block Logic & Live Stopwatch ----- */
+    function onHandstandLevelSelectChange() {
+      const lvlNum = Number(document.getElementById('hs-session-level').value);
+      const lvl = HANDSTAND_LEVELS.find(l => l.level === lvlNum) || HANDSTAND_LEVELS[0];
+      const chipsWrap = document.getElementById('hs-drill-chips');
+      chipsWrap.innerHTML = lvl.drills.map((d, idx) => `
+        <button onclick="pickHandstandDrill(${lvlNum}, ${idx})" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 border border-slate-700 text-[11px] font-bold text-amber-200 transition-colors">
+          ${d.name}
+        </button>
+      `).join('');
+      // Pre-fill first drill if form is default
+      pickHandstandDrill(lvlNum, 0, true);
+    }
+
+    function pickHandstandDrill(lvlNum, drillIdx, silent = false) {
+      const lvl = HANDSTAND_LEVELS.find(l => l.level === lvlNum) || HANDSTAND_LEVELS[0];
+      const d = lvl.drills[drillIdx];
+      if (!d) return;
+      document.getElementById('hs-drill-input').value = d.name;
+      document.getElementById('hs-duration-input').value = d.defaultSec;
+      document.getElementById('hs-mode-input').value = d.mode;
+      if (!silent) showToast(`Drill ausgewählt: ${d.name}`, 'info');
+    }
+
+    function renderQualityStars() {
+      const wrap = document.getElementById('hs-quality-stars');
+      wrap.innerHTML = [1, 2, 3, 4, 5].map(n => `
+        <button type="button" onclick="setDraftHsQuality(${n})" class="p-0.5 transition-transform active:scale-90" aria-label="${n} Sterne">
+          <svg class="w-6 h-6 ${n <= ui.draftHsQuality ? 'text-amber-500 fill-amber-400' : 'text-slate-300 fill-slate-200'}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+          </svg>
+        </button>
+      `).join('');
+    }
+
+    function setDraftHsQuality(stars) {
+      ui.draftHsQuality = stars;
+      renderQualityStars();
+    }
+
+    function addHandstandAttemptFromForm(forcedDuration = null) {
+      const drill = document.getElementById('hs-drill-input').value.trim() || 'Handstand-Versuch';
+      const duration = forcedDuration !== null ? forcedDuration : Number(document.getElementById('hs-duration-input').value);
+      const mode = document.getElementById('hs-mode-input').value;
+      if (!duration || duration <= 0) {
+        showToast('Bitte eine gültige Haltezeit in Sekunden angeben.', 'error');
+        return;
+      }
+      ui.draftHsAttempts.push({
+        id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+        drill,
+        duration: Number(duration.toFixed(1)),
+        mode,
+        quality: ui.draftHsQuality
+      });
+      renderHandstandAttempts();
+    }
+
+    function removeHandstandAttempt(idx) {
+      ui.draftHsAttempts.splice(idx, 1);
+      renderHandstandAttempts();
+    }
+
+    function computeSessionHsStats(attempts) {
+      const freeTimes = attempts.filter(a => a.mode === 'frei').map(a => Number(a.duration) || 0);
+      const bestFree = freeTimes.length ? Math.max(...freeTimes) : 0;
+
+      // Top-3 holds prioritizes non-wall holds (frei + abloesen), falls back to all attempts
+      const skillTimes = attempts.filter(a => a.mode !== 'wand').map(a => Number(a.duration) || 0);
+      const pool = skillTimes.length ? skillTimes : attempts.map(a => Number(a.duration) || 0);
+      const top3 = [...pool].sort((a, b) => b - a).slice(0, 3);
+      const avgTop3 = top3.length ? Number((top3.reduce((s, v) => s + v, 0) / top3.length).toFixed(1)) : 0;
+
+      return { bestFree, avgTop3 };
+    }
+
+    function renderHandstandAttempts() {
+      const wrap = document.getElementById('hs-attempts-list');
+      const stats = computeSessionHsStats(ui.draftHsAttempts);
+      document.getElementById('hs-live-best').textContent = `${stats.bestFree} s`;
+      document.getElementById('hs-live-top3').textContent = `${stats.avgTop3} s`;
+
+      if (ui.draftHsAttempts.length === 0) {
+        wrap.innerHTML = '<div class="text-xs text-slate-500 text-center py-3 bg-slate-50 rounded-xl border border-dashed border-slate-300">Noch keine Handstand-Versuche erfasst – nutze die Live-Stoppuhr oder füge oben manuell einen Versuch hinzu.</div>';
+        return;
+      }
+
+      const modeBadge = {
+        wand: 'bg-slate-200 text-slate-700',
+        abloesen: 'bg-amber-100 text-amber-800',
+        frei: 'bg-emerald-100 text-emerald-800'
+      };
+      const modeLabel = { wand: 'Wand', abloesen: 'Ablösen', frei: 'Frei' };
+
+      wrap.innerHTML = ui.draftHsAttempts.map((a, idx) => `
+        <div class="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-xs font-extrabold text-slate-400">#${idx + 1}</span>
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${modeBadge[a.mode] || modeBadge.wand}">${modeLabel[a.mode] || a.mode}</span>
+              <span class="text-xs font-bold text-slate-900 truncate">${a.drill}</span>
+            </div>
+            <div class="text-[11px] text-amber-600 font-semibold mt-0.5">
+              ${'★'.repeat(a.quality)}${'☆'.repeat(5 - a.quality)} <span class="text-slate-400 font-normal">(Linie)</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-sm font-extrabold font-mono text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-lg">${a.duration} s</span>
+            <button onclick="removeHandstandAttempt(${idx})" class="p-1.5 text-slate-400 hover:text-rose-600" title="Entfernen">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Live Stopwatch Functions
+    function formatStopwatch(ms) {
+      const totalTenths = Math.floor(ms / 100);
+      const tenths = totalTenths % 10;
+      const totalSec = Math.floor(totalTenths / 10);
+      const mins = Math.floor(totalSec / 60);
+      const secs = totalSec % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${tenths}`;
+    }
+
+    function updateStopwatchLoop() {
+      if (!swState.running) return;
+      const nowMs = swState.elapsedMs + (Date.now() - swState.startTime);
+      document.getElementById('sw-display').textContent = formatStopwatch(nowMs);
+      swState.rafId = requestAnimationFrame(updateStopwatchLoop);
+    }
+
+    function toggleStopwatch() {
+      const btn = document.getElementById('sw-toggle-btn');
+      if (swState.running) {
+        swState.elapsedMs += Date.now() - swState.startTime;
+        swState.running = false;
+        if (swState.rafId) cancelAnimationFrame(swState.rafId);
+        btn.textContent = 'Weiter';
+        btn.className = 'px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm min-w-[84px]';
+      } else {
+        swState.startTime = Date.now();
+        swState.running = true;
+        btn.textContent = 'Stop';
+        btn.className = 'px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-extrabold text-xs sm:text-sm min-w-[84px]';
+        updateStopwatchLoop();
+      }
+    }
+
+    function resetStopwatch() {
+      swState.running = false;
+      swState.elapsedMs = 0;
+      if (swState.rafId) cancelAnimationFrame(swState.rafId);
+      document.getElementById('sw-display').textContent = '00:00.0';
+      const btn = document.getElementById('sw-toggle-btn');
+      btn.textContent = 'Start';
+      btn.className = 'px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm min-w-[84px]';
+    }
+
+    function applyStopwatchAsAttempt() {
+      const totalMs = swState.running ? swState.elapsedMs + (Date.now() - swState.startTime) : swState.elapsedMs;
+      const sec = Number((totalMs / 1000).toFixed(1));
+      if (sec < 0.5) {
+        showToast('Stoppuhr zuerst starten, um eine Haltezeit zu messen.', 'info');
+        return;
+      }
+      resetStopwatch();
+      document.getElementById('hs-duration-input').value = sec;
+      addHandstandAttemptFromForm(sec);
+      showToast(`Versuch (${sec} s) übernommen!`, 'success');
+    }
+
+    // Countdown Timer Functions
+    function formatCD(s) {
+      return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    }
+
+    function setCountdown(sec) {
+      stopCountdown();
+      cdState.preset = sec;
+      cdState.remaining = sec;
+      document.getElementById('cd-display').textContent = formatCD(sec);
+    }
+
+    function toggleCountdown() {
+      if (cdState.running) {
+        stopCountdown();
+      } else {
+        if (cdState.remaining <= 0) cdState.remaining = cdState.preset;
+        cdState.running = true;
+        document.getElementById('cd-toggle-btn').textContent = 'Pause';
+        document.getElementById('cd-toggle-btn').className = 'px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold min-w-[70px]';
+        cdState.timerId = setInterval(() => {
+          cdState.remaining--;
+          document.getElementById('cd-display').textContent = formatCD(Math.max(0, cdState.remaining));
+          if (cdState.remaining <= 0) {
+            stopCountdown();
+            playBeep();
+            showToast('Countdown abgelaufen!', 'success');
+          }
+        }, 1000);
+      }
+    }
+
+    function stopCountdown() {
+      if (cdState.timerId) clearInterval(cdState.timerId);
+      cdState.timerId = null;
+      cdState.running = false;
+      document.getElementById('cd-toggle-btn').textContent = 'Start';
+      document.getElementById('cd-toggle-btn').className = 'px-3.5 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-white text-xs font-extrabold min-w-[70px]';
+    }
+
+    function resetCountdown() {
+      stopCountdown();
+      cdState.remaining = cdState.preset;
+      document.getElementById('cd-display').textContent = formatCD(cdState.preset);
+    }
+
+    function playBeep() {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        const ctx = new AC();
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.frequency.setValueAtTime(720, ctx.currentTime);
+        g.gain.setValueAtTime(0.12, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.4);
+      } catch (e) {}
+    }
+
+    /* ----- Pain Sliders UI ----- */
+    function toggleLog24hOpen() {
+      const isOpen = document.getElementById('log-knee-24h-open').checked;
+      document.getElementById('log-knee-24h-wrap').classList.toggle('hidden', isOpen);
+      document.getElementById('log-knee-24h-hint').classList.toggle('hidden', !isOpen);
+    }
+
+    function updateAllPainUI() {
+      // Knee Angle
+      const ang = Number(document.getElementById('log-knee-angle').value);
+      document.getElementById('log-knee-angle-val').textContent = `${ang}°`;
+
+      // Knee Training Pain
+      const kp = Number(document.getElementById('log-knee-pain').value);
+      const kpBadge = document.getElementById('log-knee-pain-badge');
+      kpBadge.textContent = `${kp} / 10`;
+      kpBadge.className = kp <= 3 ? 'px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700' : 'px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700';
+      document.getElementById('log-knee-pain').className = kp <= 3 ? 'w-full slider-emerald' : 'w-full slider-rose';
+      document.getElementById('log-knee-pain-warn').classList.toggle('hidden', kp <= 3);
+
+      // Knee 24h Pain
+      const k24 = Number(document.getElementById('log-knee-24h').value);
+      const k24Badge = document.getElementById('log-knee-24h-badge');
+      k24Badge.textContent = `${k24} / 10`;
+      k24Badge.className = k24 <= 3 ? 'px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700' : 'px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700';
+
+      // Biceps Pain
+      const bp = Number(document.getElementById('log-biceps-pain').value);
+      const bpBadge = document.getElementById('log-biceps-badge');
+      bpBadge.textContent = `${bp} / 10`;
+      bpBadge.className = bp <= 3 ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700' : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700';
+      document.getElementById('log-biceps-warn').classList.toggle('hidden', bp <= 3);
+
+      // Handstand Wrist & Shoulder
+      const wp = Number(document.getElementById('hs-wrist-pain').value);
+      const wpBadge = document.getElementById('hs-wrist-badge');
+      wpBadge.textContent = `${wp} / 10`;
+      wpBadge.className = wp <= 3 ? 'px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700' : 'px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700';
+
+      const sp = Number(document.getElementById('hs-shoulder-pain').value);
+      const spBadge = document.getElementById('hs-shoulder-badge');
+      spBadge.textContent = `${sp} / 10`;
+      spBadge.className = sp <= 3 ? 'px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700' : 'px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700';
+    }
+
+    /* ----- Save / Edit Workout Session ----- */
+    function saveWorkoutSession() {
+      const meta = WORKOUT_TYPES.find(t => t.id === ui.selectedType) || WORKOUT_TYPES[0];
+      const date = document.getElementById('log-date').value || getTodayISO();
+      const phase = getEffectivePhase(date);
+      const hasKnee = meta.hasKnee;
+      const hasUpper = meta.hasUpper;
+      const hasHandstand = meta.isHS || ui.includeHandstandAddon;
+
+      // Validation
+      const kneeDone = hasKnee ? ui.draftKneeExercises.some(ex => ex.sets.some(s => s.done)) : false;
+      const upperDone = hasUpper ? ui.draftUpperExercises.some(ex => ex.sets.some(s => s.done)) : false;
+      const hsDone = hasHandstand ? ui.draftHsAttempts.length > 0 : false;
+
+      if (!kneeDone && !upperDone && !hsDone && ui.selectedType !== 'physio') {
+        showToast('Bitte hake mindestens einen Satz ab oder erfasse einen Handstand-Versuch.', 'error');
+        return;
+      }
+
+      const title = (!meta.isHS && hasHandstand) ? `${meta.label} + Handstand` : meta.label;
+      const entry = {
+        id: ui.editingId || `w-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        date,
+        phase,
+        type: meta.id,
+        title,
+        hasKnee,
+        hasUpper,
+        hasHandstand,
+        notes: document.getElementById('log-notes').value.trim(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (hasKnee) {
+        const is24Open = document.getElementById('log-knee-24h-open').checked;
+        entry.knee = {
+          angle: Number(document.getElementById('log-knee-angle').value),
+          painTraining: Number(document.getElementById('log-knee-pain').value),
+          pain24h: is24Open ? null : Number(document.getElementById('log-knee-24h').value),
+          exercises: JSON.parse(JSON.stringify(ui.draftKneeExercises))
+        };
+      }
+
+      if (hasUpper) {
+        entry.upper = {
+          bicepsPain: Number(document.getElementById('log-biceps-pain').value),
+          exercises: JSON.parse(JSON.stringify(ui.draftUpperExercises))
+        };
+      }
+
+      if (hasHandstand) {
+        const hsStats = computeSessionHsStats(ui.draftHsAttempts);
+        entry.handstand = {
+          level: Number(document.getElementById('hs-session-level').value),
+          checklist: [
+            document.getElementById('hs-check-1').checked,
+            document.getElementById('hs-check-2').checked,
+            document.getElementById('hs-check-3').checked
+          ],
+          attempts: JSON.parse(JSON.stringify(ui.draftHsAttempts)),
+          bestFreeHold: hsStats.bestFree,
+          avgTop3: hsStats.avgTop3,
+          wristPain: Number(document.getElementById('hs-wrist-pain').value),
+          shoulderPain: Number(document.getElementById('hs-shoulder-pain').value)
+        };
+      }
+
+      if (ui.editingId) {
+        const idx = appData.workouts.findIndex(w => w.id === ui.editingId);
+        if (idx >= 0) appData.workouts[idx] = entry;
+        else appData.workouts.push(entry);
+        ui.editingId = null;
+        document.getElementById('log-edit-banner').classList.add('hidden');
+        document.getElementById('log-save-label').textContent = 'Trainingseinheit speichern';
+        showToast('Einheit aktualisiert!', 'success');
+      } else {
+        appData.workouts.push(entry);
+        showToast(`„${title}“ am ${formatDE(date)} gespeichert!`, 'success');
+      }
+
+      saveAppData();
+      selectWorkoutType(ui.selectedType);
+    }
+
+    function editSession(id) {
+      const w = appData.workouts.find(x => x.id === id);
+      if (!w) return;
+
+      ui.editingId = w.id;
+      ui.logDate = w.date;
+      ui.selectedType = w.type;
+      ui.includeHandstandAddon = w.type !== 'handstand' && !!w.hasHandstand;
+
+      document.getElementById('log-date').value = w.date;
+      document.getElementById('toggle-handstand-addon').checked = ui.includeHandstandAddon;
+      document.getElementById('log-notes').value = w.notes || '';
+      document.getElementById('log-edit-banner').classList.remove('hidden');
+      document.getElementById('log-save-label').textContent = 'Änderungen speichern';
+
+      ui.draftKneeExercises = w.knee ? JSON.parse(JSON.stringify(w.knee.exercises || [])) : [];
+      ui.draftUpperExercises = w.upper ? JSON.parse(JSON.stringify(w.upper.exercises || [])) : [];
+      ui.draftHsAttempts = w.handstand ? JSON.parse(JSON.stringify(w.handstand.attempts || [])) : [];
+
+      if (w.knee) {
+        document.getElementById('log-knee-angle').value = w.knee.angle ?? 50;
+        document.getElementById('log-knee-pain').value = w.knee.painTraining ?? 1;
+        if (w.knee.pain24h === null || w.knee.pain24h === undefined) {
+          document.getElementById('log-knee-24h-open').checked = true;
+        } else {
+          document.getElementById('log-knee-24h-open').checked = false;
+          document.getElementById('log-knee-24h').value = w.knee.pain24h;
+        }
+        toggleLog24hOpen();
+      }
+      if (w.upper) {
+        document.getElementById('log-biceps-pain').value = w.upper.bicepsPain ?? 0;
+      }
+      if (w.handstand) {
+        document.getElementById('hs-session-level').value = String(w.handstand.level || 1);
+        const cl = w.handstand.checklist || [false, false, false];
+        document.getElementById('hs-check-1').checked = !!cl[0];
+        document.getElementById('hs-check-2').checked = !!cl[1];
+        document.getElementById('hs-check-3').checked = !!cl[2];
+        document.getElementById('hs-wrist-pain').value = w.handstand.wristPain ?? 1;
+        document.getElementById('hs-shoulder-pain').value = w.handstand.shoulderPain ?? 0;
+      }
+
+      selectWorkoutType(w.type);
+      switchTab('training');
+    }
+
+    function cancelEditSession() {
+      ui.editingId = null;
+      document.getElementById('log-edit-banner').classList.add('hidden');
+      document.getElementById('log-save-label').textContent = 'Trainingseinheit speichern';
+      selectWorkoutType(ui.selectedType);
+    }
+
+    /* =====================================================================
+       6. TAB 3: HANDSTAND PROGRESSION TRACKER
+       ===================================================================== */
+    function computeHandstandMetrics() {
+      const hsWorkouts = appData.workouts
+        .filter(w => w.hasHandstand && w.handstand)
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      let pbFree = 0;
+      let maxLvl1InSession = 0;
+      let free15Count = 0;
+      let bailPracticed = false;
+      let free25Count = 0;
+
+      hsWorkouts.forEach(w => {
+        const atts = w.handstand.attempts || [];
+        let lvl1InThis = 0;
+        atts.forEach(a => {
+          const dur = Number(a.duration) || 0;
+          if (a.mode === 'frei' && dur > pbFree) pbFree = dur;
+          if ((a.mode === 'abloesen' || a.mode === 'frei') && dur >= 5) lvl1InThis++;
+          if (a.mode === 'frei' && dur >= 15) free15Count++;
+          if (a.mode === 'frei' && dur >= 25) free25Count++;
+          if ((a.drill || '').toLowerCase().includes('bail') || (a.drill || '').toLowerCase().includes('pirouette')) {
+            bailPracticed = true;
+          }
+        });
+        if (lvl1InThis > maxLvl1InSession) maxLvl1InSession = lvl1InThis;
+      });
+
+      const lastSession = hsWorkouts[hsWorkouts.length - 1];
+      const lastTop3 = lastSession ? (lastSession.handstand.avgTop3 || 0) : 0;
+
+      const bounds = getWeekBounds(getTodayISO());
+      const thisWeekCount = hsWorkouts.filter(w => w.date >= bounds.start && w.date <= bounds.end).length;
+
+      // Progress percentages per level (0–100)
+      const p1 = Math.min(100, Math.round((maxLvl1InSession / 5) * 100));
+      const p2Raw = (Math.min(3, free15Count) / 3) * 80 + (bailPracticed ? 20 : 0);
+      const p2 = Math.min(100, Math.round(p2Raw));
+      const p3 = Math.min(100, Math.round((Math.min(3, free25Count) / 3) * 100));
+      const p4 = Math.min(100, Math.round((pbFree / 60) * 100));
+
+      return {
+        totalSessions: hsWorkouts.length,
+        thisWeekCount,
+        pbFree,
+        lastTop3,
+        progress: { 1: p1, 2: p2, 3: p3, 4: p4 },
+        details: {
+          1: `${Math.min(5, maxLvl1InSession)} / 5 kontrollierte Ablöse-Versuche ≥ 5s in einer Session`,
+          2: `${Math.min(3, free15Count)} / 3 freie Holds ≥ 15s • Pirouette Bail: ${bailPracticed ? 'Geübt ✓' : 'Noch offen'}`,
+          3: `${Math.min(3, free25Count)} / 3 freie Holds ≥ 25s absolviert`,
+          4: `Aktueller PB: ${pbFree} s / 60 s Ziel`
+        }
+      };
+    }
+
+    function setActiveHandstandLevel(lvl) {
+      appData.activeHandstandLevel = lvl;
+      saveAppData();
+      document.getElementById('hs-session-level').value = String(lvl);
+      renderHandstandTab();
+      showToast(`Aktive Handstand-Stufe auf Stufe ${lvl} gesetzt!`, 'success');
+    }
+
+    function renderHandstandTab() {
+      const m = computeHandstandMetrics();
+      document.getElementById('hs-stat-pb').textContent = `${m.pbFree} s`;
+      document.getElementById('hs-stat-top3').textContent = `${m.lastTop3} s`;
+      document.getElementById('hs-stat-total').textContent = `${m.totalSessions}`;
+      document.getElementById('hs-stat-week').textContent = `${m.thisWeekCount} / 3`;
+
+      const container = document.getElementById('hs-roadmap-container');
+      container.innerHTML = HANDSTAND_LEVELS.map(st => {
+        const isCurrent = appData.activeHandstandLevel === st.level;
+        const isPassed = appData.activeHandstandLevel > st.level;
+        const pct = m.progress[st.level] || 0;
+        const canLevelUp = isCurrent && pct >= 100 && st.level < 4;
+
+        const borderClass = isCurrent
+          ? 'border-2 border-amber-400 bg-amber-50/40 ring-1 ring-amber-200'
+          : isPassed
+            ? 'border border-emerald-200 bg-emerald-50/30'
+            : 'border border-slate-200 bg-slate-50/60';
+
+        const statusBadge = isCurrent
+          ? '<span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-500 text-white">Aktive Stufe</span>'
+          : isPassed
+            ? '<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">Abgeschlossen ✓</span>'
+            : '<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-200 text-slate-600">Nächstes Ziel</span>';
+
+        return `
+          <div class="rounded-2xl p-4 space-y-3 ${borderClass}">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  ${statusBadge}
+                  <span class="text-xs font-bold text-slate-500">${st.goalText}</span>
+                </div>
+                <h3 class="text-sm sm:text-base font-extrabold text-slate-900 mt-1">${st.title}</h3>
+              </div>
+              <div class="flex items-center gap-1.5">
+                ${canLevelUp ? `
+                  <button onclick="setActiveHandstandLevel(${st.level + 1})" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-sm">Aufsteigen zu Stufe ${st.level + 1} →</button>
+                ` : (!isCurrent ? `
+                  <button onclick="setActiveHandstandLevel(${st.level})" class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold">Als aktiv setzen</button>
+                ` : '')}
+              </div>
+            </div>
+
+            <!-- Drills List -->
+            <div class="flex flex-wrap gap-1.5">
+              ${st.drills.map(d => `<span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700">${d.name}</span>`).join('')}
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed">${st.cues}</p>
+
+            <!-- Auto Progress Bar -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-[11px]">
+                <span class="font-semibold text-slate-600">${m.details[st.level]}</span>
+                <span class="font-extrabold ${pct >= 100 ? 'text-emerald-600' : 'text-amber-700'}">${pct}%</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full ${pct >= 100 ? 'bg-emerald-500' : 'bg-amber-500'} rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* =====================================================================
+       7. TAB 4: KALENDER & HISTORIE
+       ===================================================================== */
+    const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+    function renderCalendarAndHistoryTab() {
+      renderCalendarGrid();
+      renderCalendarDayDetail(ui.calSelectedDate);
+      renderPhysioDatesList();
+      renderHistoryList();
+    }
+
+    function shiftCalendarMonth(delta) {
+      ui.calMonth += delta;
+      if (ui.calMonth > 11) { ui.calMonth = 0; ui.calYear++; }
+      if (ui.calMonth < 0)  { ui.calMonth = 11; ui.calYear--; }
+      renderCalendarGrid();
+    }
+
+    function jumpCalendarToToday() {
+      const t = getTodayISO();
+      const [y, m] = t.split('-').map(Number);
+      ui.calYear = y; ui.calMonth = m - 1; ui.calSelectedDate = t;
+      renderCalendarGrid();
+      renderCalendarDayDetail(t);
+    }
+
+    function renderCalendarGrid() {
+      const y = ui.calYear, m = ui.calMonth;
+      document.getElementById('cal-month-title').textContent = `${MONTHS_DE[m]} ${y}`;
+      const startOffset = (new Date(y, m, 1).getDay() + 6) % 7;
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+      const today = getTodayISO();
+
+      let html = '';
+      for (let i = 0; i < startOffset; i++) {
+        html += '<div class="h-14 sm:h-16 rounded-xl bg-slate-100/50"></div>';
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayWorkouts = appData.workouts.filter(w => w.date === iso);
+        const isPhysioDay = appData.physioDates.some(p => p.date === iso);
+        const isToday = iso === today;
+        const isSel = iso === ui.calSelectedDate;
+
+        const dots = [];
+        if (dayWorkouts.some(w => w.type === 'knee_home')) dots.push('<span class="w-2 h-2 rounded-full bg-blue-600"></span>');
+        if (dayWorkouts.some(w => w.type === 'upper_a' || w.type === 'upper_b')) dots.push('<span class="w-2 h-2 rounded-full bg-indigo-600"></span>');
+        if (dayWorkouts.some(w => w.type === 'combo_a' || w.type === 'combo_b')) dots.push('<span class="w-2 h-2 rounded-full bg-violet-600"></span>');
+        if (dayWorkouts.some(w => w.hasHandstand)) dots.push('<span class="w-2 h-2 rounded-full bg-amber-500"></span>');
+        if (dayWorkouts.some(w => w.type === 'physio')) dots.push('<span class="w-2 h-2 rounded-full bg-emerald-600"></span>');
+
+        const cellClass = isSel
+          ? 'bg-blue-50 border-2 border-blue-500'
+          : isPhysioDay
+            ? 'bg-emerald-50 border border-emerald-400 hover:border-emerald-500'
+            : 'bg-white border border-slate-200 hover:border-slate-400';
+
+        html += `
+          <button onclick="selectCalendarDay('${iso}')" class="h-14 sm:h-16 rounded-xl p-1 flex flex-col items-center justify-between transition-all ${cellClass}">
+            <span class="text-xs font-extrabold ${isToday ? 'bg-slate-900 text-white w-6 h-6 rounded-full flex items-center justify-center' : isPhysioDay ? 'text-emerald-800' : 'text-slate-800'}">${d}</span>
+            ${isPhysioDay ? '<span class="text-[8px] font-extrabold uppercase px-1 rounded bg-emerald-600 text-white leading-tight">PHYSIO</span>' : ''}
+            <div class="flex items-center justify-center gap-0.5 flex-wrap">${dots.join('')}</div>
+          </button>
+        `;
+      }
+      document.getElementById('cal-grid').innerHTML = html;
+    }
+
+    function selectCalendarDay(iso) {
+      ui.calSelectedDate = iso;
+      renderCalendarGrid();
+      renderCalendarDayDetail(iso);
+    }
+
+    function renderCalendarDayDetail(iso) {
+      const box = document.getElementById('cal-day-detail');
+      const dayW = appData.workouts.filter(w => w.date === iso);
+      const physio = appData.physioDates.find(p => p.date === iso);
+      const phase = getEffectivePhase(iso);
+      const defaultType = physio ? 'physio' : (phase === 2 ? 'combo_a' : 'knee_home');
+
+      let html = `
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div class="text-sm font-extrabold text-slate-900">${getWeekdayDE(iso)}, ${formatDE(iso)}</div>
+            <div class="text-xs text-slate-500">Phase ${phase} ${physio ? '• Physiotherapie-Tag (Kein Gym)' : ''}</div>
+          </div>
+          <button onclick="quickStartTraining('${defaultType}', '${iso}')" class="px-3.5 py-2 rounded-xl ${physio ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-900 hover:bg-slate-800'} text-white text-xs font-extrabold">
+            ${physio ? 'Physio-Protokoll loggen' : '+ Training für diesen Tag'}
+          </button>
+        </div>
+      `;
+
+      if (physio) {
+        html += `<div class="bg-emerald-100/70 border border-emerald-300 rounded-xl px-3 py-2 text-xs text-emerald-900"><strong>Physio-Termin:</strong> ${physio.note || 'Kein Gym geplant'}</div>`;
+      }
+
+      if (dayW.length) {
+        html += '<div class="space-y-2">' + dayW.map(w => `
+          <div class="flex items-center justify-between gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2">
+            <div class="min-w-0">
+              <div class="text-xs font-extrabold text-slate-900 truncate">${w.title}</div>
+              <div class="text-[11px] text-slate-500">
+                ${w.hasKnee && w.knee ? `Knie ${w.knee.angle}° (${w.knee.painTraining}/10) ` : ''}
+                ${w.hasUpper && w.upper ? `• Bizeps ${w.upper.bicepsPain}/10 ` : ''}
+                ${w.hasHandstand && w.handstand ? `• HS PB ${w.handstand.bestFreeHold}s / Ø ${w.handstand.avgTop3}s` : ''}
+              </div>
+            </div>
+            <button onclick="editSession('${w.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 shrink-0">Öffnen</button>
+          </div>
+        `).join('') + '</div>';
+      } else if (!physio) {
+        html += '<p class="text-xs text-slate-500">Keine Einheit an diesem Tag protokolliert.</p>';
+      }
+
+      box.innerHTML = html;
+    }
+
+    function renderPhysioDatesList() {
+      const wrap = document.getElementById('physio-dates-list');
+      const sorted = [...appData.physioDates].sort((a, b) => a.date.localeCompare(b.date));
+      wrap.innerHTML = sorted.map(p => `
+        <div class="flex items-center justify-between gap-2 bg-emerald-50/70 border border-emerald-200 rounded-xl p-2.5">
+          <div class="min-w-0">
+            <div class="text-xs font-extrabold text-emerald-900">${getWeekdayDE(p.date)}, ${formatDE(p.date)}</div>
+            <div class="text-[11px] text-emerald-800 truncate">${p.note || 'Kein Gym geplant'}</div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button onclick="quickStartTraining('physio', '${p.date}')" class="px-2 py-1 rounded-lg bg-white border border-emerald-300 text-[11px] font-bold text-emerald-800">Protokoll</button>
+            <button onclick="removePhysioDate('${p.id}')" class="p-1 text-slate-400 hover:text-rose-600" title="Löschen">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addPhysioDate() {
+      const d = document.getElementById('physio-new-date').value;
+      const n = document.getElementById('physio-new-note').value.trim();
+      if (!d) { showToast('Bitte ein Datum wählen.', 'error'); return; }
+      if (appData.physioDates.some(p => p.date === d)) { showToast('Datum bereits eingetragen.', 'info'); return; }
+      appData.physioDates.push({ id: `ph-${Date.now()}`, date: d, note: n || 'Physiotherapie Knie – Kein Gym geplant' });
+      saveAppData();
+      document.getElementById('physio-new-date').value = '';
+      document.getElementById('physio-new-note').value = '';
+      renderCalendarAndHistoryTab();
+      showToast(`Physio-Termin am ${formatDE(d)} hinzugefügt.`, 'success');
+    }
+
+    function removePhysioDate(id) {
+      appData.physioDates = appData.physioDates.filter(p => p.id !== id);
+      saveAppData();
+      renderCalendarAndHistoryTab();
+      showToast('Physio-Termin entfernt.', 'info');
+    }
+
+    /* ----- History List ----- */
+    function setHistoryFilter(f) {
+      ui.historyFilter = f;
+      renderHistoryList();
+    }
+
+    function renderHistoryList() {
+      document.querySelectorAll('.hfilter-btn').forEach(btn => {
+        const active = btn.dataset.hfilter === ui.historyFilter;
+        btn.className = active
+          ? 'hfilter-btn px-3 py-1.5 rounded-lg text-xs font-extrabold bg-slate-900 text-white'
+          : 'hfilter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50';
+      });
+
+      const list = [...appData.workouts].filter(w => {
+        if (ui.historyFilter === 'all') return true;
+        if (ui.historyFilter === 'knee') return w.hasKnee && w.type !== 'physio';
+        if (ui.historyFilter === 'upper') return w.hasUpper;
+        if (ui.historyFilter === 'handstand') return w.hasHandstand;
+        if (ui.historyFilter === 'physio') return w.type === 'physio';
+        return true;
+      }).sort((a, b) => b.date.localeCompare(a.date) || (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+
+      const container = document.getElementById('history-cards');
+      if (!list.length) {
+        container.innerHTML = '<div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-xs text-slate-500">Keine Einheiten für diesen Filter gefunden.</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(w => {
+        const badges = [];
+        if (w.type === 'physio') badges.push('<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800">Physio</span>');
+        else if (w.hasKnee && w.hasUpper) badges.push('<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-violet-100 text-violet-800">Kombi-Gym</span>');
+        else {
+          if (w.hasKnee) badges.push('<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-800">Knie-Reha</span>');
+          if (w.hasUpper) badges.push('<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100 text-indigo-800">Oberkörper</span>');
+        }
+        if (w.hasHandstand) badges.push('<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800">Handstand</span>');
+
+        const needs24 = w.hasKnee && w.knee && (w.knee.pain24h === null || w.knee.pain24h === undefined);
+
+        // Build compact details
+        const detailLines = [];
+        if (w.hasHandstand && w.handstand) {
+          detailLines.push(`<div class="text-xs text-amber-900 bg-amber-50/70 border border-amber-200 rounded-lg px-2.5 py-1.5"><strong>Handstand (Stufe ${w.handstand.level}):</strong> ${(w.handstand.attempts || []).length} Versuche • Best Frei: <strong>${w.handstand.bestFreeHold}s</strong> • Ø Top-3: <strong>${w.handstand.avgTop3}s</strong> • Handgelenk: ${w.handstand.wristPain}/10 • Schulter: ${w.handstand.shoulderPain}/10</div>`);
+        }
+        if (w.hasKnee && w.knee) {
+          const kDone = (w.knee.exercises || []).filter(e => e.sets.some(s => s.done)).map(e => `${e.name} (${e.sets.filter(s => s.done).length}×)`).join(', ');
+          detailLines.push(`<div class="text-xs text-blue-950 bg-blue-50/60 border border-blue-200 rounded-lg px-2.5 py-1.5"><strong>Knie:</strong> Winkel ${w.knee.angle}° • Training: <strong class="${w.knee.painTraining > 3 ? 'text-rose-600' : ''}">${w.knee.painTraining}/10</strong> • 24h: <strong class="${w.knee.pain24h > 3 ? 'text-rose-600' : ''}">${w.knee.pain24h !== null ? w.knee.pain24h + '/10' : 'Offen'}</strong>${kDone ? `<div class="text-[11px] text-slate-600 mt-0.5">${kDone}</div>` : ''}</div>`);
+        }
+        if (w.hasUpper && w.upper) {
+          const uDone = (w.upper.exercises || []).filter(e => e.sets.some(s => s.done)).map(e => {
+            const ds = e.sets.filter(s => s.done);
+            const mw = Math.max(...ds.map(s => Number(s.weight) || 0));
+            return `${e.name} (${ds.length}×${mw > 0 ? ' @' + mw + 'kg' : ''})`;
+          }).join(', ');
+          detailLines.push(`<div class="text-xs text-indigo-950 bg-indigo-50/60 border border-indigo-200 rounded-lg px-2.5 py-1.5"><strong>Oberkörper:</strong> Bizepssehne li.: <strong class="${w.upper.bicepsPain > 3 ? 'text-rose-600' : ''}">${w.upper.bicepsPain}/10</strong>${uDone ? `<div class="text-[11px] text-slate-600 mt-0.5">${uDone}</div>` : ''}</div>`);
+        }
+
+        return `
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-2.5">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  ${badges.join('')}
+                  <span class="text-xs font-bold text-slate-500">${getWeekdayDE(w.date)}, ${formatDE(w.date)}</span>
+                </div>
+                <h4 class="text-sm sm:text-base font-extrabold text-slate-900 mt-1">${w.title}</h4>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="editSession('${w.id}')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700">Bearbeiten</button>
+                <button onclick="promptDeleteWorkout('${w.id}')" class="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600" title="Löschen">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">${detailLines.join('')}</div>
+
+            ${needs24 ? `
+              <div class="bg-blue-50 border border-blue-300 rounded-xl p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-blue-900">24h-Knie-Check (nächster Morgen) nachtragen:</span>
+                  <span id="h24-val-${w.id}" class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">1 / 10</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <input type="range" id="h24-slider-${w.id}" min="0" max="10" step="1" value="1" oninput="updateQuick24hUI('h24', '${w.id}', this.value)" class="w-full slider-emerald" />
+                  <button onclick="saveQuick24h('h24', '${w.id}')" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shrink-0">Speichern</button>
+                </div>
+                <div id="h24-warn-${w.id}" class="hidden text-[11px] font-bold text-rose-700">⚠ &gt;3/10: Reiz beim nächsten Mal etwas reduzieren!</div>
+              </div>
+            ` : ''}
+
+            ${w.notes ? `<p class="text-xs text-slate-600 italic bg-slate-50 rounded-lg px-3 py-2 border-l-2 border-slate-300">„${w.notes}“</p>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function promptDeleteWorkout(id) {
+      openConfirm('Einheit löschen?', 'Möchtest du diesen Trainingseintrag wirklich dauerhaft entfernen?', () => {
+        appData.workouts = appData.workouts.filter(w => w.id !== id);
+        saveAppData();
+        renderCalendarAndHistoryTab();
+        showToast('Einheit gelöscht.', 'info');
+      });
+    }
+
+    /* =====================================================================
+       8. TAB 5: STATISTIK (4 INTERAKTIVE CHART.JS DIAGRAMME)
+       ===================================================================== */
+    function destroyChart(key) {
+      if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+    }
+
+    // Horizontal reference line plugin
+    function makeHLinePlugin(id, axisId, value, color, label) {
+      return {
+        id,
+        afterDatasetsDraw(chart) {
+          const sc = chart.scales[axisId];
+          if (!sc) return;
+          const y = sc.getPixelForValue(value);
+          const { left, right } = chart.chartArea;
+          const ctx = chart.ctx;
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([6, 4]);
+          ctx.lineWidth = 1.6;
+          ctx.strokeStyle = color;
+          ctx.moveTo(left, y);
+          ctx.lineTo(right, y);
+          ctx.stroke();
+          ctx.fillStyle = color;
+          ctx.font = 'bold 10px Inter, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(label, right - 4, y - 5);
+          ctx.restore();
+        }
+      };
+    }
+
+    function renderStatisticsTab() {
+      const sorted = [...appData.workouts].sort((a, b) => a.date.localeCompare(b.date));
+      document.getElementById('stat-empty-box').classList.toggle('hidden', sorted.length > 0);
+
+      renderWeeklyFreqChart(sorted);
+      renderHandstandProgressChart(sorted);
+      renderKneeCourseChart(sorted);
+      populateUpperDropdown(sorted);
+      renderUpperProgressChart();
+    }
+
+    function renderWeeklyFreqChart(sorted) {
+      destroyChart('freq');
+      const ctx = document.getElementById('chart-weekly-freq').getContext('2d');
+      const map = {};
+      sorted.forEach(w => {
+        const wk = getISOWeekInfo(w.date);
+        if (!map[wk.key]) map[wk.key] = { label: wk.label, knee: 0, upper: 0, hs: 0 };
+        if (w.hasKnee && w.type !== 'physio') map[wk.key].knee++;
+        if (w.hasUpper) map[wk.key].upper++;
+        if (w.hasHandstand) map[wk.key].hs++;
+      });
+      const keys = Object.keys(map).sort();
+      const labels = keys.length ? keys.map(k => map[k].label) : ['Keine Daten'];
+
+      charts.freq = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Knie-Reha', data: keys.map(k => map[k].knee), backgroundColor: '#2563eb', borderRadius: 5 },
+            { label: 'Oberkörper (Gym)', data: keys.map(k => map[k].upper), backgroundColor: '#4f46e5', borderRadius: 5 },
+            { label: 'Handstand', data: keys.map(k => map[k].hs), backgroundColor: '#f59e0b', borderRadius: 5 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+          scales: {
+            y: { beginAtZero: true, suggestedMax: 4, ticks: { stepSize: 1 } }
+          }
+        },
+        plugins: [makeHLinePlugin('goalLine3', 'y', 3, 'rgba(15, 23, 42, 0.55)', 'Wochenziel: 3×')]
+      });
+    }
+
+    function renderHandstandProgressChart(sorted) {
+      destroyChart('hs');
+      const ctx = document.getElementById('chart-hs-progress').getContext('2d');
+      const hsList = sorted.filter(w => w.hasHandstand && w.handstand);
+      const labels = hsList.length ? hsList.map(w => formatDE(w.date).slice(0, 5)) : ['Keine Daten'];
+
+      charts.hs = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Längster freier Hold (s)',
+              data: hsList.map(w => w.handstand.bestFreeHold || 0),
+              borderColor: '#d97706', backgroundColor: 'rgba(245, 158, 11, 0.15)',
+              fill: true, tension: 0.25, yAxisID: 'ySec', pointRadius: 4
+            },
+            {
+              label: 'Ø Top-3 Holds (s)',
+              data: hsList.map(w => w.handstand.avgTop3 || 0),
+              borderColor: '#059669', backgroundColor: '#059669',
+              tension: 0.25, yAxisID: 'ySec', pointRadius: 4
+            },
+            {
+              label: 'Handgelenk-Schmerz (0–10)',
+              data: hsList.map(w => w.handstand.wristPain ?? 0),
+              borderColor: '#e11d48', borderDash: [4, 3],
+              tension: 0.25, yAxisID: 'yPain', pointRadius: 3
+            },
+            {
+              label: 'Schulter-Schmerz (0–10)',
+              data: hsList.map(w => w.handstand.shoulderPain ?? 0),
+              borderColor: '#6366f1', borderDash: [4, 3],
+              tension: 0.25, yAxisID: 'yPain', pointRadius: 3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+          scales: {
+            ySec: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'Haltezeit (Sek.)', color: '#b45309', font: { size: 11 } } },
+            yPain: { type: 'linear', position: 'right', min: 0, max: 10, grid: { drawOnChartArea: false }, title: { display: true, text: 'Schmerz (0–10)', color: '#e11d48', font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function renderKneeCourseChart(sorted) {
+      destroyChart('knee');
+      const ctx = document.getElementById('chart-knee-course').getContext('2d');
+      const list = sorted.filter(w => w.hasKnee && w.knee);
+      const labels = list.length ? list.map(w => formatDE(w.date).slice(0, 5)) : ['Keine Daten'];
+
+      charts.knee = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Schmerzfr. Kniewinkel (°)',
+              data: list.map(w => w.knee.angle),
+              borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.12)',
+              fill: true, tension: 0.3, yAxisID: 'yAngle', pointRadius: 4
+            },
+            {
+              label: 'Schmerz Training (0–10)',
+              data: list.map(w => w.knee.painTraining),
+              borderColor: '#f59e0b', backgroundColor: '#f59e0b',
+              tension: 0.25, yAxisID: 'yPain', pointRadius: 4
+            },
+            {
+              label: '24h-Folgetag (0–10)',
+              data: list.map(w => w.knee.pain24h),
+              borderColor: '#059669', backgroundColor: '#059669',
+              spanGaps: true, tension: 0.25, yAxisID: 'yPain', pointRadius: 5
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+          scales: {
+            yAngle: { type: 'linear', position: 'left', min: 30, max: 120, title: { display: true, text: 'Winkel (°)', color: '#2563eb', font: { size: 11 } } },
+            yPain: { type: 'linear', position: 'right', min: 0, max: 10, grid: { drawOnChartArea: false }, title: { display: true, text: 'Schmerz (0–10)', color: '#e11d48', font: { size: 11 } } }
+          }
+        },
+        plugins: [makeHLinePlugin('kneeWarn3', 'yPain', 3, 'rgba(225, 29, 72, 0.85)', 'Warngrenze 3/10')]
+      });
+    }
+
+    function populateUpperDropdown(sorted) {
+      const sel = document.getElementById('stat-upper-select');
+      const prev = sel.value;
+      const names = new Set();
+      sorted.forEach(w => {
+        if (w.hasUpper && w.upper && w.upper.exercises) {
+          w.upper.exercises.forEach(e => {
+            if (e.sets && e.sets.some(s => s.done)) names.add(e.name);
+          });
+        }
+      });
+      const arr = Array.from(names).sort((a, b) => a.localeCompare(b, 'de'));
+      if (!arr.length) {
+        sel.innerHTML = '<option value="">Noch keine Oberkörper-Übung geloggt</option>';
+        return;
+      }
+      sel.innerHTML = arr.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
+      sel.value = prev && arr.includes(prev) ? prev : arr[0];
+    }
+
+    function renderUpperProgressChart() {
+      destroyChart('upper');
+      const ctx = document.getElementById('chart-upper-progress').getContext('2d');
+      const exName = document.getElementById('stat-upper-select').value;
+      const sorted = [...appData.workouts].sort((a, b) => a.date.localeCompare(b.date));
+
+      const pts = [];
+      let hasW = false;
+      sorted.forEach(w => {
+        if (!w.hasUpper || !w.upper) return;
+        const match = (w.upper.exercises || []).find(e => e.name === exName);
+        if (!match) return;
+        const done = (match.sets || []).filter(s => s.done);
+        if (!done.length) return;
+        const maxW = Math.max(...done.map(s => Number(s.weight) || 0));
+        const totalReps = done.reduce((acc, s) => acc + (Number(s.reps) || 0), 0);
+        if (maxW > 0) hasW = true;
+        pts.push({ date: w.date, maxW, totalReps, bicepsPain: w.upper.bicepsPain ?? 0 });
+      });
+
+      const labels = pts.length ? pts.map(p => formatDE(p.date).slice(0, 5)) : ['Keine Daten'];
+      charts.upper = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: hasW ? 'Maximalgewicht (kg)' : 'Gesamt-Wiederholungen (Volumen)',
+              data: pts.map(p => hasW ? p.maxW : p.totalReps),
+              borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.14)',
+              fill: true, tension: 0.25, yAxisID: 'yLoad', pointRadius: 4
+            },
+            {
+              label: 'Bizepssehne li. Schmerz (0–10)',
+              data: pts.map(p => p.bicepsPain),
+              borderColor: '#e11d48', backgroundColor: '#e11d48',
+              tension: 0.25, yAxisID: 'yPain', pointRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+          scales: {
+            yLoad: { type: 'linear', position: 'left', beginAtZero: !hasW, title: { display: true, text: hasW ? 'Gewicht (kg)' : 'Wdh. Gesamt', color: '#4f46e5', font: { size: 11 } } },
+            yPain: { type: 'linear', position: 'right', min: 0, max: 10, grid: { drawOnChartArea: false }, title: { display: true, text: 'Bizepssehne (0–10)', color: '#e11d48', font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    /* =====================================================================
+       9. MODAL "DATEN & DEMO": DEMO DATA, CSV, JSON EXPORT/IMPORT, RESET
+       ===================================================================== */
+    function openDataModal() { document.getElementById('modal-data').classList.remove('hidden'); }
+    function closeDataModal() { document.getElementById('modal-data').classList.add('hidden'); }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify({ app: 'Reha, Gym & Handstand Tracker', exportedAt: new Date().toISOString(), data: appData }, null, 2)], { type: 'application/json' });
+      downloadBlob(blob, `reha-gym-handstand-backup-${getTodayISO()}.json`);
+      showToast('JSON-Backup gespeichert.', 'success');
+    }
+
+    function importJSON(evt) {
+      const file = evt.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const payload = parsed.data || parsed;
+          if (!Array.isArray(payload.workouts)) throw new Error('Invalid');
+          appData.workouts = payload.workouts;
+          if (Array.isArray(payload.physioDates)) appData.physioDates = payload.physioDates;
+          if (payload.activeHandstandLevel) appData.activeHandstandLevel = Number(payload.activeHandstandLevel);
+          appData.manualPhase = payload.manualPhase ?? null;
+          saveAppData();
+          closeDataModal();
+          switchTab(ui.activeTab);
+          showToast(`${appData.workouts.length} Einheiten importiert!`, 'success');
+        } catch (err) {
+          showToast('Ungültige JSON-Backup-Datei.', 'error');
+        } finally {
+          evt.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function exportCSV() {
+      const sorted = [...appData.workouts].sort((a, b) => a.date.localeCompare(b.date));
+      const headers = [
+        'Datum', 'Wochentag', 'Phase', 'Einheit',
+        'Knie_Winkel_Grad', 'Knie_Training_Schmerz', 'Knie_24h_Check',
+        'Bizepssehne_Schmerz', 'Handstand_Stufe', 'HS_Best_Frei_Sek', 'HS_Top3_Avg_Sek',
+        'HS_Handgelenk_Schmerz', 'HS_Schulter_Schmerz', 'Notizen'
+      ];
+      const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const rows = sorted.map(w => [
+        formatDE(w.date), getWeekdayDE(w.date), `Phase ${w.phase}`, w.title,
+        w.knee ? w.knee.angle : '', w.knee ? w.knee.painTraining : '',
+        w.knee ? (w.knee.pain24h === null ? 'Offen' : w.knee.pain24h) : '',
+        w.upper ? w.upper.bicepsPain : '',
+        w.handstand ? `Stufe ${w.handstand.level}` : '',
+        w.handstand ? w.handstand.bestFreeHold : '',
+        w.handstand ? w.handstand.avgTop3 : '',
+        w.handstand ? w.handstand.wristPain : '',
+        w.handstand ? w.handstand.shoulderPain : '',
+        w.notes || ''
+      ].map(esc).join(';'));
+
+      const csv = '\uFEFF' + headers.join(';') + '\n' + rows.join('\n');
+      downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), `physio-trainingsbericht-${getTodayISO()}.csv`);
+      showToast('CSV-Bericht heruntergeladen!', 'success');
+    }
+
+    function promptLoadDemoData() {
+      closeDataModal();
+      openConfirm(
+        '4-Wochen-Demo-Daten laden?',
+        'Es werden realistische Einträge von Mitte Nov bis Mitte Dez 2026 geladen (Knie 45° → 60°, Oberkörper-Steigerung, Handstand Stufe 1 Toe Pulls 6s → Stufe 2 freie Holds 16s, Physio 16.12.). Vorhandene Einträge werden ersetzt.',
+        () => {
+          loadDemoData();
+          showToast('4-Wochen-Demo-Daten erfolgreich geladen!', 'success');
+        }
+      );
+    }
+
+    function promptResetAll() {
+      closeDataModal();
+      openConfirm(
+        'Alle Daten zurücksetzen?',
+        'Alle gespeicherten Workouts werden gelöscht und die 6 festen Physio-Termine wiederhergestellt.',
+        () => {
+          appData.workouts = [];
+          appData.physioDates = JSON.parse(JSON.stringify(DEFAULT_PHYSIO_DATES));
+          appData.activeHandstandLevel = 1;
+          appData.manualPhase = null;
+          saveAppData();
+          switchTab(ui.activeTab);
+          showToast('Alle Daten wurden zurückgesetzt.', 'info');
+        }
+      );
+    }
+
+    function makeDemoEx(catalog, weightDelta = 0, repDelta = 0) {
+      return catalog.map(ex => ({
+        name: ex.name, metric: ex.metric, useWeight: ex.useWeight, target: ex.target, badge: ex.badge,
+        sets: Array.from({ length: ex.defaultSets }, () => ({
+          done: true,
+          weight: ex.useWeight && ex.defaultWeight > 0 ? ex.defaultWeight + weightDelta : 0,
+          reps: ex.defaultReps + repDelta,
+          rir: ex.useWeight ? 2 : ''
+        }))
+      }));
+    }
+
+    function makeDemoHS(level, attempts, wristPain, shoulderPain) {
+      const st = computeSessionHsStats(attempts);
+      return {
+        level, checklist: [true, true, true], attempts,
+        bestFreeHold: st.bestFree, avgTop3: st.avgTop3, wristPain, shoulderPain
+      };
+    }
+
+    function loadDemoData() {
+      appData.physioDates = JSON.parse(JSON.stringify(DEFAULT_PHYSIO_DATES));
+      appData.activeHandstandLevel = 2;
+      appData.manualPhase = null;
+
+      appData.workouts = [
+        // KW 47 (Mitte Nov 2026 - Phase 1)
+        {
+          id: 'd-1', date: '2026-11-18', phase: 1, type: 'knee_home', title: 'Knie-Reha (Zuhause)',
+          hasKnee: true, hasUpper: false, hasHandstand: false,
+          knee: { angle: 45, painTraining: 3, pain24h: 2, exercises: makeDemoEx(KNEE_HOME_EXERCISES, 0, 0) },
+          notes: 'Start bei 45° Wall Sit, danach spürbar weniger Spannung auf der Patellarsehne.'
+        },
+        {
+          id: 'd-2', date: '2026-11-19', phase: 1, type: 'upper_a', title: 'Oberkörper A (Gym) + Handstand',
+          hasKnee: false, hasUpper: true, hasHandstand: true,
+          upper: { bicepsPain: 2, exercises: makeDemoEx(UPPER_A_EXERCISES, 0, 0) },
+          handstand: makeDemoHS(1, [
+            { id: 'a1', drill: 'Chest-to-Wall Ausrichtung (60s)', mode: 'wand', duration: 60, quality: 4 },
+            { id: 'a2', drill: 'Toe Pulls (Bauch zur Wand, sanft ablösen)', mode: 'abloesen', duration: 5, quality: 3 },
+            { id: 'a3', drill: 'Toe Pulls (Bauch zur Wand, sanft ablösen)', mode: 'abloesen', duration: 6, quality: 3 },
+            { id: 'a4', drill: 'Heel Pulls (Rücken zur Wand, Fingerdruck)', mode: 'abloesen', duration: 6, quality: 3 }
+          ], 2, 1),
+          notes: 'Erste Toe Pulls 5–6s geklappt, Dips strikt bis 90° sauber.'
+        },
+        {
+          id: 'd-3', date: '2026-11-21', phase: 1, type: 'knee_home', title: 'Knie-Reha (Zuhause)',
+          hasKnee: true, hasUpper: false, hasHandstand: false,
+          knee: { angle: 45, painTraining: 2, pain24h: 2, exercises: makeDemoEx(KNEE_HOME_EXERCISES, 0, 0) },
+          notes: 'Gute Kontrolle, kein Ruheschmerz.'
+        },
+        {
+          id: 'd-4', date: '2026-11-22', phase: 1, type: 'upper_b', title: 'Oberkörper B (Gym) + Handstand',
+          hasKnee: false, hasUpper: true, hasHandstand: true,
+          upper: { bicepsPain: 2, exercises: makeDemoEx(UPPER_B_EXERCISES, 0, 0) },
+          handstand: makeDemoHS(1, [
+            { id: 'a5', drill: 'Toe Pulls (Bauch zur Wand, sanft ablösen)', mode: 'abloesen', duration: 6, quality: 4 },
+            { id: 'a6', drill: 'Toe Pulls (Bauch zur Wand, sanft ablösen)', mode: 'abloesen', duration: 7, quality: 4 },
+            { id: 'a7', drill: 'Toe Pulls (Bauch zur Wand, sanft ablösen)', mode: 'abloesen', duration: 8, quality: 4 },
+            { id: 'a8', drill: 'Heel Pulls (Rücken zur Wand, Fingerdruck)', mode: 'abloesen', duration: 7, quality: 3 },
+            { id: 'a9', drill: 'Heel Pulls (Rücken zur Wand, Fingerdruck)', mode: 'abloesen', duration: 6, quality: 4 }
+          ], 2, 1),
+          notes: '5× ≥5s Ablösen geschafft – Stufe 1 Kriterium erfüllt!'
+        },
+
+        // KW 48 (23.11. – 29.11.2026 - Aktuelle Woche Phase 1)
+        {
+          id: 'd-5', date: '2026-11-23', phase: 1, type: 'knee_home', title: 'Knie-Reha (Zuhause)',
+          hasKnee: true, hasUpper: false, hasHandstand: false,
+          knee: { angle: 50, painTraining: 2, pain24h: 1, exercises: makeDemoEx(KNEE_HOME_EXERCISES, 0, 0) },
+          notes: 'Winkel schmerzarm auf 50° gesteigert.'
+        },
+        {
+          id: 'd-6', date: '2026-11-24', phase: 1, type: 'upper_a', title: 'Oberkörper A (Gym) + Handstand',
+          hasKnee: false, hasUpper: true, hasHandstand: true,
+          upper: { bicepsPain: 1, exercises: makeDemoEx(UPPER_A_EXERCISES, 2.5, 0) },
+          handstand: makeDemoHS(2, [
+            { id: 'a10', drill: 'Pirouette Bail (kontrolliert seitlich absteigen)', mode: 'abloesen', duration: 6, quality: 4 },
+            { id: 'a11', drill: 'Chest-to-Wall Split/Scissor-Ablösen', mode: 'abloesen', duration: 10, quality: 4 },
+            { id: 'a12', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 9, quality: 3 },
+            { id: 'a13', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 11, quality: 4 }
+          ], 1, 1),
+          notes: 'Pirouette Bail fühlt sich sicher für das rechte Knie an, erster 11s freier Hold!'
+        },
+        {
+          id: 'd-7', date: '2026-11-25', phase: 1, type: 'knee_home', title: 'Knie-Reha (Zuhause)',
+          hasKnee: true, hasUpper: false, hasHandstand: false,
+          knee: { angle: 50, painTraining: 2, pain24h: null, exercises: makeDemoEx(KNEE_HOME_EXERCISES, 0, 0) },
+          notes: '24h-Check für morgen früh noch offen.'
+        },
+
+        // KW 49 (30.11. – 06.12.2026 - Ende Phase 1)
+        {
+          id: 'd-8', date: '2026-12-01', phase: 1, type: 'upper_b', title: 'Oberkörper B (Gym) + Handstand',
+          hasKnee: false, hasUpper: true, hasHandstand: true,
+          upper: { bicepsPain: 1, exercises: makeDemoEx(UPPER_B_EXERCISES, 2.5, 0) },
+          handstand: makeDemoHS(2, [
+            { id: 'a14', drill: 'Chest-to-Wall Split/Scissor-Ablösen', mode: 'abloesen', duration: 12, quality: 4 },
+            { id: 'a15', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 12, quality: 4 },
+            { id: 'a16', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 14, quality: 4 }
+          ], 1, 0),
+          notes: 'Schulter im Handstand komplett ruhig, aktive Elevation hilft enorm.'
+        },
+        {
+          id: 'd-9', date: '2026-12-03', phase: 1, type: 'knee_home', title: 'Knie-Reha (Zuhause)',
+          hasKnee: true, hasUpper: false, hasHandstand: false,
+          knee: { angle: 55, painTraining: 2, pain24h: 1, exercises: makeDemoEx(KNEE_HOME_EXERCISES, 0, 5) },
+          notes: '55° ohne Reizung am Folgetag.'
+        },
+        {
+          id: 'd-10', date: '2026-12-05', phase: 1, type: 'handstand', title: 'Handstand-Session',
+          hasKnee: false, hasUpper: false, hasHandstand: true,
+          handstand: makeDemoHS(2, [
+            { id: 'a17', drill: 'Pirouette Bail (kontrolliert seitlich absteigen)', mode: 'abloesen', duration: 7, quality: 5 },
+            { id: 'a18', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 15, quality: 4 },
+            { id: 'a19', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 13, quality: 4 }
+          ], 1, 0),
+          notes: 'Erster 15s freier Hold geknackt!'
+        },
+
+        // KW 50 (ab 08.12.2026 - Phase 2 Kombi-Gym)
+        {
+          id: 'd-11', date: '2026-12-08', phase: 2, type: 'combo_a', title: 'Kombi-Gym A (Knie + OK A) + Handstand',
+          hasKnee: true, hasUpper: true, hasHandstand: true,
+          knee: { angle: 60, painTraining: 2, pain24h: 2, exercises: makeDemoEx(KNEE_GYM_EXERCISES, 0, 0) },
+          upper: { bicepsPain: 1, exercises: makeDemoEx(UPPER_A_EXERCISES, 5, 0) },
+          handstand: makeDemoHS(2, [
+            { id: 'a20', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 15, quality: 4 },
+            { id: 'a21', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 14, quality: 4 },
+            { id: 'a22', drill: 'Chest-to-Wall Split/Scissor-Ablösen', mode: 'abloesen', duration: 12, quality: 5 }
+          ], 1, 0),
+          notes: 'Start Phase 2! Beinpresse 3s/3s bis 60° sehr gut vertragen.'
+        },
+        {
+          id: 'd-12', date: '2026-12-10', phase: 2, type: 'combo_b', title: 'Kombi-Gym B (Knie + OK B)',
+          hasKnee: true, hasUpper: true, hasHandstand: false,
+          knee: { angle: 60, painTraining: 1, pain24h: 1, exercises: makeDemoEx(KNEE_GYM_EXERCISES, 5, 0) },
+          upper: { bicepsPain: 0, exercises: makeDemoEx(UPPER_B_EXERCISES, 5, 0) },
+          notes: 'Bizepssehne erstmals komplett 0/10.'
+        },
+        {
+          id: 'd-13', date: '2026-12-12', phase: 2, type: 'combo_a', title: 'Kombi-Gym A (Knie + OK A) + Handstand',
+          hasKnee: true, hasUpper: true, hasHandstand: true,
+          knee: { angle: 60, painTraining: 1, pain24h: 1, exercises: makeDemoEx(KNEE_GYM_EXERCISES, 5, 0) },
+          upper: { bicepsPain: 0, exercises: makeDemoEx(UPPER_A_EXERCISES, 5, 0) },
+          handstand: makeDemoHS(2, [
+            { id: 'a23', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 16, quality: 5 },
+            { id: 'a24', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 15, quality: 4 },
+            { id: 'a25', drill: 'Freie Kurz-Holds (5–15s)', mode: 'frei', duration: 14, quality: 4 }
+          ], 1, 0),
+          notes: 'Neuer PB: 16s freier Handstand! Alle 3×15s für Stufe 2 erreicht.'
+        },
+
+        // KW 51 (Physio Ersttermin 16.12.2026)
+        {
+          id: 'd-14', date: '2026-12-16', phase: 2, type: 'physio', title: 'Physiotherapie-Protokoll',
+          hasKnee: true, hasUpper: false, hasHandstand: false,
+          knee: {
+            angle: 60, painTraining: 1, pain24h: 1,
+            exercises: [{ name: 'Physiotherapie-Behandlung & Befund', metric: 'min', useWeight: false, target: '1 × 30 Min.', badge: 'Ersttermin', sets: [{ done: true, weight: 0, reps: 30, rir: '' }] }]
+          },
+          notes: 'Ersttermin Physio: Sehr zufrieden mit dem 3s/3s HSR-Protokoll & schmerzfreien 60°. Kein Gym heute.'
+        }
+      ];
+
+      saveAppData();
+      switchTab(ui.activeTab);
+    }
+
+    /* =====================================================================
+       10. CONFIRM DIALOG & TOAST SYSTEM (NO ALERT / CONFIRM)
+       ===================================================================== */
+    function openConfirm(title, msg, onConfirm) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-msg').textContent = msg;
+      confirmActionFn = onConfirm;
+      document.getElementById('confirm-ok-btn').onclick = () => {
+        const fn = confirmActionFn;
+        closeConfirm();
+        if (fn) fn();
+      };
+      document.getElementById('modal-confirm').classList.remove('hidden');
+    }
+
+    function closeConfirm() {
+      document.getElementById('modal-confirm').classList.add('hidden');
+      confirmActionFn = null;
+    }
+
+    function showToast(msg, type = 'info') {
+      const root = document.getElementById('toast-root');
+      const cls = {
+        success: 'bg-emerald-600 text-white border-emerald-700',
+        error: 'bg-rose-600 text-white border-rose-700',
+        info: 'bg-slate-900 text-white border-slate-700'
+      };
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto px-4 py-3 rounded-xl border text-xs font-bold shadow-xl animate-fade ${cls[type] || cls.info}`;
+      el.textContent = msg;
+      root.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.25s ease';
+        setTimeout(() => el.remove(), 260);
+      }, 3000);
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
