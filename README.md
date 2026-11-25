@@ -18,12 +18,6 @@ Ein responsiver Fitness- und Reha-Tracker als reine HTML-Datei. Die Anwendung un
 
 Die Anwendung benötigt keine Installation oder Build-Umgebung.
 
-### Live-Version
-
-Der Tracker ist als GitHub Pages Website verfügbar:
-
-**https://vladbux.github.io/Fitness-Reha-Tracker/**
-
 ### Lokal starten
 
 1. Das Projekt- oder Downloadverzeichnis öffnen.
